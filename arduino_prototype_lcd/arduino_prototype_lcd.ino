@@ -12,8 +12,12 @@ int board[8][8] = {
   {0,0,0,0,0,0,0,0}
 };
 
-int columnShift = {
-  1,2,3,4,5,6,7,8
+char rows[8] = {
+  'A','B','C','D','E','F','G','H'
+};
+
+int columnShift[8] = {
+  2,3,4,5,6,7,8,9
 };
 
 int shiftInput = 12;
@@ -23,29 +27,33 @@ int nRows = 8;
 int rowShift;
 
 void setup() {
-  for (int i = 1; i < nRows; i++) {
+  for (int i = 0; i < nRows; i++) {
     pinMode(columnShift[i], INPUT);
   }
   pinMode(clock, OUTPUT);
   pinMode(shiftInput, OUTPUT);
-  digitalWrite(power, HIGH);
   rowShift = 0;
   lcd.begin(16, 2);
 }
 
 void loop() {
   clockCycle(HIGH);
-  for (int i = 1; i < nRows; i++) {
+  for (int i = 0; i < nRows; i++) {
     clockCycle(LOW);
   }
-  for (int i = 1; i < nRows; i++) {
-     for (int j = 1; j < nRows; j++) {
+  lcd.clear();
+  lcd.setCursor(1,0);
+  int count = 0;
+  for (int i = 0; i < nRows; i++) {
+     for (int j = 0; j < nRows; j++) {
        if (board[i][j] == 1) {
-         lcd.print("r");
-         lcd.print(i);
-         lcd.print("c");
-         lcd.print(j);
+         lcd.print(rows[i]);
+         lcd.print(j+1);
          lcd.print(" ");
+         count++;
+       }
+       if (count == 5) {
+         lcd.setCursor(1,1);
        }
     }
   }
