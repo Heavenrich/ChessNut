@@ -1,6 +1,73 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
+byte pawn[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B01100,
+  B01100,
+  B01100,
+  B01100,
+  B11110
+};
+
+byte knight[8] = {
+  B00000,
+  B01000,
+  B01110,
+  B01111,
+  B01111,
+  B01100,
+  B01100,
+  B11110
+};
+
+byte bishop[8] = {
+  B00000,
+  B00100,
+  B01100,
+  B01000,
+  B01100,
+  B01100,
+  B01100,
+  B11110
+};
+
+byte rook[8] = {
+  B00000,
+  B00000,
+  B10101,
+  B11111,
+  B01110,
+  B01110,
+  B01110,
+  B11111
+};
+
+byte king[8] = {
+  B00100,
+  B01110,
+  B00100,
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B11111
+};
+
+byte queen[8] = {
+  B00100,
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B11111
+};
+
+
 int board[8][8] = {
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
@@ -33,6 +100,12 @@ void setup() {
   pinMode(clock, OUTPUT);
   pinMode(shiftInput, OUTPUT);
   rowShift = 0;
+  lcd.createChar(0, pawn);
+  lcd.createChar(1, knight);
+  lcd.createChar(2, bishop);
+  lcd.createChar(3, rook);
+  lcd.createChar(4, king);
+  lcd.createChar(5, queen);
   lcd.begin(16, 2);
 }
 
