@@ -84,12 +84,12 @@ char rows[8] = {
 };
 
 int columnShift[8] = {
-  2,3,4,5,6,7,8,9
+  35,34,33,32,31,30,29,28
 };
 
 int shiftInput = 12;
 int clock = 10;
-int period = 50;
+int quarterPeriod = 5;
 int nRows = 8;
 int rowShift;
 
@@ -99,7 +99,7 @@ void setup() {
   }
   pinMode(clock, OUTPUT);
   pinMode(shiftInput, OUTPUT);
-  rowShift = 0;
+  rowShift = nRows - 1;
   lcd.createChar(0, pawn);
   lcd.createChar(1, knight);
   lcd.createChar(2, bishop);
@@ -111,7 +111,7 @@ void setup() {
 
 void loop() {
   clockCycle(HIGH);
-  for (int i = 0; i < nRows; i++) {
+  for (int i = 1; i < nRows; i++) {
     clockCycle(LOW);
   }
   lcd.clear();
@@ -120,8 +120,8 @@ void loop() {
   for (int i = 0; i < nRows; i++) {
      for (int j = 0; j < nRows; j++) {
        if (board[i][j] == 1) {
-         lcd.print(rows[i]);
-         lcd.print(j+1);
+         lcd.print(rows[j]);
+         lcd.print(i+1);
          lcd.print(" ");
          count++;
        }
@@ -130,17 +130,22 @@ void loop() {
        }
     }
   }
+  if (count == 0) {
+      lcd.write("nothing...");
+  }
 }
 
 void clockCycle(boolean i) {
-  rowShift = rowShift % nRows + 1;
+  rowShift = (rowShift + 1) % nRows;
   digitalWrite(clock, LOW);
   digitalWrite(shiftInput, i);
-  delay(period / 2);
+  delay(2 * quarterPeriod);
   
   digitalWrite(clock, HIGH);
+  delay(quarterPeriod);
+  
   for (int i = 0; i < nRows; i++) {
     board[rowShift][i] = digitalRead(columnShift[i]);
   }
-  delay(period / 2);
+  delay(quarterPeriod);
 }
