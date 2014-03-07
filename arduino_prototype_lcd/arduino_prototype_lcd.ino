@@ -87,22 +87,17 @@ int columnShift[8] = {
   35,34,33,32,31,30,29,28
 };
 
-int shiftInput = 12;
-int clock = 10;
-int quarterPeriod = 50;
+int period = 50;
 int nRows = 8;
-int rowShift;
 int scan = 11;
 boolean enable = true;
 
 void setup() {
   for (int i = 0; i < nRows; i++) {
     pinMode(columnShift[i], INPUT);
+    pinMode(i+2, OUTPUT);
   }
-  pinMode(clock, OUTPUT);
-  pinMode(shiftInput, OUTPUT);
   pinMode(scan, INPUT);
-  rowShift = nRows - 1;
   lcd.createChar(0, pawn);
   lcd.createChar(1, knight);
   lcd.createChar(2, bishop);
@@ -110,19 +105,14 @@ void setup() {
   lcd.createChar(4, king);
   lcd.createChar(5, queen);
   lcd.begin(16, 2);
-  digitalWrite(shiftInput, LOW);
 }
 
 void loop() {
   if (enable && digitalRead(scan)){
     enable = false;
-    clockCycle(HIGH);
-    for (int i = 1; i < nRows; i++) {
-      clockCycle(LOW);
+    for (int i = 0; i < nRows; i++) {
+      scanRow(i);
     }
-    digitalWrite(clock, LOW);
-    delay(10);
-    digitalWrite(clock, HIGH);
     lcd.clear();
     lcd.setCursor(1,0);
     int count = 0;
@@ -147,17 +137,18 @@ void loop() {
   }
 }
 
-void clockCycle(boolean i) {
-  rowShift = (rowShift + 1) % nRows;
-  digitalWrite(clock, LOW);
-  digitalWrite(shiftInput, i);
-  delay(2 * quarterPeriod);
-  
-  digitalWrite(clock, HIGH);
-  delay(quarterPeriod);
+void scanRow(int row) {
+  digitalWrite(row + 2, HIGH);
+  for (int i = 0; i < nRows; i++) {
+    if (i != row) {
+      digitalWrite(i+2, LOW);
+    }
+  }
+  delay(int(period/2));
   
   for (int i = 0; i < nRows; i++) {
-    board[7-rowShift][i] = digitalRead(columnShift[i]);
+    board[row][i] = digitalRead(columnShift[i]);
   }
-  delay(quarterPeriod);
+  
+  delay(int(period/2));
 }
