@@ -89,9 +89,11 @@ int columnShift[8] = {
 
 int shiftInput = 12;
 int clock = 10;
-int quarterPeriod = 5;
+int quarterPeriod = 50;
 int nRows = 8;
 int rowShift;
+int scan = 11;
+boolean enable = true;
 
 void setup() {
   for (int i = 0; i < nRows; i++) {
@@ -99,6 +101,7 @@ void setup() {
   }
   pinMode(clock, OUTPUT);
   pinMode(shiftInput, OUTPUT);
+  pinMode(scan, INPUT);
   rowShift = nRows - 1;
   lcd.createChar(0, pawn);
   lcd.createChar(1, knight);
@@ -107,31 +110,40 @@ void setup() {
   lcd.createChar(4, king);
   lcd.createChar(5, queen);
   lcd.begin(16, 2);
+  digitalWrite(shiftInput, LOW);
 }
 
 void loop() {
-  clockCycle(HIGH);
-  for (int i = 1; i < nRows; i++) {
-    clockCycle(LOW);
-  }
-  lcd.clear();
-  lcd.setCursor(1,0);
-  int count = 0;
-  for (int i = 0; i < nRows; i++) {
-     for (int j = 0; j < nRows; j++) {
-       if (board[i][j] == 1) {
-         lcd.print(rows[j]);
-         lcd.print(i+1);
-         lcd.print(" ");
-         count++;
-       }
-       if (count == 5) {
-         lcd.setCursor(1,1);
-       }
+  if (enable && digitalRead(scan)){
+    enable = false;
+    clockCycle(HIGH);
+    for (int i = 1; i < nRows; i++) {
+      clockCycle(LOW);
     }
-  }
-  if (count == 0) {
-      lcd.write("nothing...");
+    digitalWrite(clock, LOW);
+    delay(10);
+    digitalWrite(clock, HIGH);
+    lcd.clear();
+    lcd.setCursor(1,0);
+    int count = 0;
+    for (int i = 0; i < nRows; i++) {
+       for (int j = 0; j < nRows; j++) {
+         if (board[i][j] == HIGH) {
+           lcd.print(rows[j]);
+           lcd.print(i+1);
+           lcd.print(" ");
+           count++;
+         }
+         if (count == 5) {
+           lcd.setCursor(1,1);
+         }
+      }
+    }
+    if (count == 0) {
+        lcd.write("nothing...");
+    }
+  } else if (!digitalRead(scan)) {
+    enable = true;
   }
 }
 
@@ -145,7 +157,7 @@ void clockCycle(boolean i) {
   delay(quarterPeriod);
   
   for (int i = 0; i < nRows; i++) {
-    board[rowShift][i] = digitalRead(columnShift[i]);
+    board[7-rowShift][i] = digitalRead(columnShift[i]);
   }
   delay(quarterPeriod);
 }
