@@ -3,7 +3,8 @@
 
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
-byte pawn[8] = {
+short pawn = 1;
+byte pawnChar[8] = {
   B00000,
   B00000,
   B00000,
@@ -14,7 +15,8 @@ byte pawn[8] = {
   B11110
 };
 
-byte knight[8] = {
+short knight = 2;
+byte knightChar[8] = {
   B00000,
   B01000,
   B01110,
@@ -25,7 +27,8 @@ byte knight[8] = {
   B11110
 };
 
-byte bishop[8] = {
+short bishop = 3;
+byte bishopChar[8] = {
   B00000,
   B00100,
   B01100,
@@ -36,7 +39,8 @@ byte bishop[8] = {
   B11110
 };
 
-byte rook[8] = {
+short rook = 4;
+byte rookChar[8] = {
   B00000,
   B00000,
   B10101,
@@ -47,18 +51,8 @@ byte rook[8] = {
   B11111
 };
 
-byte king[8] = {
-  B00100,
-  B01110,
-  B00100,
-  B01110,
-  B01110,
-  B01110,
-  B01110,
-  B11111
-};
-
-byte queen[8] = {
+short queen = 5;
+byte queenChar[8] = {
   B00100,
   B01110,
   B01110,
@@ -69,8 +63,19 @@ byte queen[8] = {
   B11111
 };
 
+short king = 6;
+byte kingChar[8] = {
+  B00100,
+  B01110,
+  B00100,
+  B01110,
+  B01110,
+  B01110,
+  B01110,
+  B11111
+};
 
-int board[8][8] = {
+int prevScan[8][8] = {
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
@@ -80,6 +85,39 @@ int board[8][8] = {
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0}
 };
+
+int currScan[8][8] = {
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0}
+};
+
+int diff[8][8] = {
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0}
+};
+
+short board[8][8] = {
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0}
+};  
 
 char rows[8] = {
   'A','B','C','D','E','F','G','H'
@@ -109,31 +147,104 @@ void setup() {
     pinMode(i+2, OUTPUT);
   }
   pinMode(scan, INPUT);
-  lcd.createChar(0, pawn);
-  lcd.createChar(1, knight);
-  lcd.createChar(2, bishop);
-  lcd.createChar(3, rook);
-  lcd.createChar(4, king);
-  lcd.createChar(5, queen);
+  lcd.createChar(1, pawnChar);
+  lcd.createChar(2, knightChar);
+  lcd.createChar(3, bishopChar);
+  lcd.createChar(4, rookChar);
+  lcd.createChar(5, queenChar);
+  lcd.createChar(6, kingChar);
   lcd.begin(16, 2);
 }
 
+// true if a game is underway
+boolean gameOn = false;
+
 void loop() {
-  scanBoard(true);
-  //promotePawn();
+  if (scanBoard(false)) {
+    if (gameOn) {
+      calculateMove();
+    } else if (initialize()){
+        lcd.clear();
+        lcd.print("ready to start!");
+        gameOn = true;
+    }
+  }   
 }
 
-void scanBoard(bool output) {
+boolean scanBoard(boolean output) {
+  boolean scanned = false;
   if (enable && digitalRead(scan)){
     enable = false;
+    memcpy(prevScan, currScan, sizeof(prevScan));
     for (int i = 0; i < nRows; i++) {
       scanRow(i);
     }
     if (output) {
       outputBoard();
     }
+    
+    scanned = true;
   } else if (!digitalRead(scan)) {
     enable = true;
+  }
+  
+  setDiff();
+  
+  return scanned;
+}
+
+// fill the diff matrix with current - previous scans
+void setDiff() {
+  for (int i = 0; i < nRows; i++) {
+    for (int j = 0; j < nRows; j++) {
+      diff[i][j] = currScan[i][j] - prevScan[i][j];
+    }
+  }  
+}
+
+// identify which piece has been moved, update board accordingly, print move to lcd
+void calculateMove() {
+  int newPiece[2][2];
+  int numNew = 0;
+  int oldPiece[2][2];
+  int numOld = 0;
+  
+  for (int i=0; i < nRows; i++) {
+    for (int j=0; j < nRows; j++) {
+      if (diff[i][j] == 1) {
+        numNew++;
+        if (numNew <= 2) {
+          newPiece[numNew-1][0] = i;
+          newPiece[numNew-1][1] = j;
+        }
+      } else if (diff[i][j] == -1) {
+        numOld++;
+        if (numOld <= 2) {
+          oldPiece[numOld-1][0] = i;
+          oldPiece[numOld-1][1] = j;
+        }
+      }
+    }
+  }
+  
+  if (numNew == 1 && numOld == 1) {
+    lcd.clear();
+    int piece = board[oldPiece[0][0]][oldPiece[0][1]];
+    if (piece < 0) {
+      lcd.print("B");
+      lcd.write(byte(-1*piece));
+    } else {
+      lcd.print("W");
+      lcd.write(byte(piece));
+    }
+    lcd.print(" ");
+    lcd.print(rows[oldPiece[0][1]]);
+    lcd.print(oldPiece[0][0]+1);
+    lcd.print(" to ");
+    lcd.print(rows[newPiece[0][1]]);
+    lcd.print(newPiece[0][0]+1);
+    board[newPiece[0][0]][newPiece[0][1]] = board[oldPiece[0][0]][oldPiece[0][1]];
+    board[oldPiece[0][0]][oldPiece[0][1]] = 0;   
   }
 }
 
@@ -143,7 +254,7 @@ void outputBoard() {
   for (int i = nRows - 1; i >= 0; i--) {
     Serial.print(String(i + 1) + " ");
     for (int j = 0; j < nRows; j++) {
-      Serial.print(board[i][j]);
+      Serial.print(currScan[i][j]);
     }
     Serial.print(" " + String(i + 1) + "\n");
   }
@@ -154,7 +265,7 @@ void outputBoard() {
   int count = 0;
   for (int i = 0; i < nRows; i++) {
     for (int j = 0; j < nRows; j++) {
-      if (board[i][j] == HIGH) {
+      if (currScan[i][j] == HIGH) {
         lcd.print(rows[j]);
         lcd.print(i+1);
         lcd.print(" ");
@@ -170,6 +281,7 @@ void outputBoard() {
   }
 }
 
+
 void scanRow(int row) {
   digitalWrite(row + 2, HIGH);
   for (int i = 0; i < nRows; i++) {
@@ -181,7 +293,7 @@ void scanRow(int row) {
   delay(period);
   
   for (int i = 0; i < nRows; i++) {
-    board[row][i] = digitalRead(columnShift[i]);
+    currScan[row][i] = digitalRead(columnShift[i]);
   }
 }
 
@@ -196,4 +308,39 @@ void promotePawn() {
   } else if (!digitalRead(scan)) {
     enable = true;
   }
+}
+
+// determine if the board has been set up in the standard starting position
+// if it has, then initialize the board matrix and return true
+// else return false
+boolean initialize() {
+  boolean initialized = true;
+  for (short i=0; i < nRows; i ++) {
+    for (short j=0; j < nRows; j++) {
+      if (i == 0 || i == 1 || i == 6 || i == 7) {
+        if (currScan[i][j] != 1) {
+          initialized = false;
+          break;
+        } 
+      } else if (currScan[i][j] == 1) {
+          initialized = false;
+          break;
+      }
+    }
+  }
+  
+  if (initialized) {
+    memcpy(board, (short[8][8]){
+      {rook, knight, bishop, queen, king, bishop, knight, rook},
+      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
+      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
+    }, sizeof(board));
+  } 
+ 
+  return initialized;
 }
