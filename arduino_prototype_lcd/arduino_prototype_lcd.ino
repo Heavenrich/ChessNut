@@ -102,6 +102,8 @@ int scan = 11;
 boolean enable = true;
 
 void setup() {
+  Serial.begin(9600);
+  
   for (int i = 0; i < nRows; i++) {
     pinMode(columnShift[i], INPUT);
     pinMode(i+2, OUTPUT);
@@ -136,6 +138,17 @@ void scanBoard(bool output) {
 }
 
 void outputBoard() {
+  Serial.print("------------\n");
+  Serial.print("  ABCDEFGH  \n");
+  for (int i = nRows - 1; i >= 0; i--) {
+    Serial.print(String(i + 1) + " ");
+    for (int j = 0; j < nRows; j++) {
+      Serial.print(board[i][j]);
+    }
+    Serial.print(" " + String(i + 1) + "\n");
+  }
+  Serial.print("  ABCDEFGH  \n");
+  
   lcd.clear();
   lcd.setCursor(1,0);
   int count = 0;
