@@ -1,4 +1,6 @@
 #include <LiquidCrystal.h>
+#include <Promotion.h>
+
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
 byte pawn[8] = {
@@ -87,6 +89,13 @@ int columnShift[8] = {
   35,34,33,32,31,30,29,28
 };
 
+Promotion promotions[2] = {
+  Promotion(String("Promote to Q?"), 5),
+  Promotion(String("Promote to N?"), 1)
+};
+int nPromotions = 2;
+int iPromotion = 0;
+
 int period = 50;
 int nRows = 8;
 int scan = 11;
@@ -108,32 +117,43 @@ void setup() {
 }
 
 void loop() {
+  scanBoard(true);
+  //promotePawn();
+}
+
+void scanBoard(bool output) {
   if (enable && digitalRead(scan)){
     enable = false;
     for (int i = 0; i < nRows; i++) {
       scanRow(i);
     }
-    lcd.clear();
-    lcd.setCursor(1,0);
-    int count = 0;
-    for (int i = 0; i < nRows; i++) {
-       for (int j = 0; j < nRows; j++) {
-         if (board[i][j] == HIGH) {
-           lcd.print(rows[j]);
-           lcd.print(i+1);
-           lcd.print(" ");
-           count++;
-         }
-         if (count == 5) {
-           lcd.setCursor(1,1);
-         }
-      }
-    }
-    if (count == 0) {
-        lcd.write("nothing...");
+    if (output) {
+      outputBoard();
     }
   } else if (!digitalRead(scan)) {
     enable = true;
+  }
+}
+
+void outputBoard() {
+  lcd.clear();
+  lcd.setCursor(1,0);
+  int count = 0;
+  for (int i = 0; i < nRows; i++) {
+    for (int j = 0; j < nRows; j++) {
+      if (board[i][j] == HIGH) {
+        lcd.print(rows[j]);
+        lcd.print(i+1);
+        lcd.print(" ");
+        count++;
+      }
+      if (count == 5) {
+        lcd.setCursor(1,1);
+      }
+    }
+  }
+  if (count == 0) {
+    lcd.write("nothing...");
   }
 }
 
@@ -144,11 +164,23 @@ void scanRow(int row) {
       digitalWrite(i+2, LOW);
     }
   }
-  delay(int(period/2));
+  
+  delay(period);
   
   for (int i = 0; i < nRows; i++) {
     board[row][i] = digitalRead(columnShift[i]);
   }
-  
-  delay(int(period/2));
+}
+
+void promotePawn() {
+  if (enable && digitalRead(scan)){
+    iPromotion = (iPromotion + 1) % nPromotions;
+    enable = false;
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(promotions[iPromotion].statement + " ");
+    lcd.write(byte(promotions[iPromotion].symbol));
+  } else if (!digitalRead(scan)) {
+    enable = true;
+  }
 }
