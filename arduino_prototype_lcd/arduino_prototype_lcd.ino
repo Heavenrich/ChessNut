@@ -119,7 +119,7 @@ short board[8][8] = {
   {0,0,0,0,0,0,0,0}
 };  
 
-char rows[8] = {
+char cols[8] = {
   'A','B','C','D','E','F','G','H'
 };
 
@@ -136,16 +136,19 @@ int iPromotion = 0;
 
 int period = 50;
 int nRows = 8;
-int scan = 11;
-boolean enable = true;
+int endTurn = 11;
+boolean enableEndTurn = true;
+int scan = 12;
+boolean enableScan = true;
 
 void setup() {
   Serial.begin(9600);
   
   for (int i = 0; i < nRows; i++) {
     pinMode(columnShift[i], INPUT);
-    pinMode(i+2, OUTPUT);
+    pinMode(i+36, OUTPUT);
   }
+  pinMode(endTurn, INPUT);
   pinMode(scan, INPUT);
   lcd.createChar(1, pawnChar);
   lcd.createChar(2, knightChar);
@@ -159,23 +162,43 @@ void setup() {
 // true if a game is underway
 boolean gameOn = false;
 
+// if 1, then white's turn, if -1 then black's turn
+short whosTurn = true;
+
+// list of moves made this turn 
+// moves[0] = {-1, 2, 4} means the first move of the turn was a piece being removed from D2
+// moves[1] = {1, 4, 4} means the second move of the turn was a piece being placed at D4
+#define MAX_MOVES 20
+int moves[MAX_MOVES][3];
+int numMoves = 0;
+
 void loop() {
-  if (scanBoard(false)) {
+  if (enableEndTurn && digitalRead(endTurn)) {
+    if (turnEnd()) {
+      whosTurn *= -1;
+      numMoves = 0;
+    }
+    enableEndTurn = false;
+  } else if (!digitalRead(endTurn)) {
+    enableEndTurn = true;
+  }
+  if (scanBoard(false, false)) {
     if (gameOn) {
-      calculateMove();
+      detectMove();
     } else if (initialize()){
         lcd.clear();
         lcd.print("ready to start!");
         gameOn = true;
+        memcpy(prevScan, currScan, sizeof(prevScan));
     }
-  }   
+  }
 }
 
-boolean scanBoard(boolean output) {
+boolean scanBoard(boolean output, boolean continuous) {
   boolean scanned = false;
-  if (enable && digitalRead(scan)){
-    enable = false;
-    memcpy(prevScan, currScan, sizeof(prevScan));
+  if ((enableScan && digitalRead(scan)) || continuous){
+    enableScan = false;
+    // memcpy(prevScan, currScan, sizeof(prevScan));
     for (int i = 0; i < nRows; i++) {
       scanRow(i);
     }
@@ -185,12 +208,129 @@ boolean scanBoard(boolean output) {
     
     scanned = true;
   } else if (!digitalRead(scan)) {
-    enable = true;
+    enableScan = true;
   }
   
   setDiff();
   
   return scanned;
+}
+
+boolean turnEnd() {
+  Serial.print("\nturn: ");
+  Serial.print(whosTurn);
+  Serial.print("\nnumMoves: ");
+  Serial.print(numMoves);
+  for (int i=0; i < 4; i++) {
+    Serial.print("\nMove ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(moves[i][0]);
+    Serial.print(cols[moves[i][2]]);
+    Serial.print(moves[i][1]+1);
+  }
+  reduceMoves();
+  Serial.print("\nnumMoves reduced: ");
+  Serial.print(numMoves);
+  for (int i=0; i < 4; i++) {
+    Serial.print("\nMove ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(moves[i][0]);
+    Serial.print(cols[moves[i][2]]);
+    Serial.print(moves[i][1]+1);
+  }
+  
+  if (numMoves == 2) {
+    if (
+      moves[0][0] != -1 
+      || moves[1][0] != 1
+      || board[moves[0][1]][moves[0][2]]*whosTurn < 0
+    ) {
+      lcd.clear();
+      lcd.print("invalid move");
+      return false;
+    }
+    
+    lcd.clear();
+    if (whosTurn < 0) {
+      lcd.print("B");
+    } else {
+      lcd.print("W");
+    }
+    Serial.print("------------\n");
+    Serial.print("  ABCDEFGH  \n");
+    for (int i = nRows - 1; i >= 0; i--) {
+      Serial.print(String(i + 1) + " ");
+      for (int j = 0; j < nRows; j++) {
+        Serial.print(prevScan[i][j]);
+      }
+      Serial.print(" " + String(i + 1) + "\n");
+    }
+    Serial.print("  ABCDEFGH  \n");
+    lcd.write(byte(whosTurn*board[moves[0][1]][moves[0][2]]));
+    lcd.print(" ");
+    lcd.print(cols[moves[0][2]]);
+    lcd.print(moves[0][1]+1);
+    lcd.print(" to ");
+    lcd.print(cols[moves[1][2]]);
+    lcd.print(moves[1][1]+1);
+    board[moves[1][1]][moves[1][2]] = board[moves[0][1]][moves[0][2]];
+    board[moves[0][1]][moves[0][2]] = 0;   
+    memcpy(prevScan, currScan, sizeof(prevScan));
+    Serial.print("------------\n");
+    Serial.print("  ABCDEFGH  \n");
+    for (int i = nRows - 1; i >= 0; i--) {
+      Serial.print(String(i + 1) + " ");
+      for (int j = 0; j < nRows; j++) {
+        Serial.print(prevScan[i][j]);
+      }
+      Serial.print(" " + String(i + 1) + "\n");
+    }
+    Serial.print("  ABCDEFGH  \n");
+    
+    return true;
+  }
+  
+  lcd.clear();
+  lcd.print("too many moves");
+  return false;
+}
+
+void reduceMoves() {
+  int numReduced = 0;
+  int numUp = 0;
+  int reduced[MAX_MOVES][3];
+  for (int i=0; i < numMoves; i++) {
+    if (moves[i][0] == -1) {
+      numUp++;
+    } else {
+      numUp--;
+    }
+    if (
+      moves[i][0] == -1
+      && i+2 < numMoves
+      && moves[i+1][0] == 1
+      && moves[i+2][0] == -1
+      && moves[i+1][1] == moves[i+2][1]
+      && moves[i+1][2] == moves[i+2][2]
+    ) {
+      reduced[numReduced][0] = -1;
+      reduced[numReduced][1] = moves[i][1];
+      reduced[numReduced][2] = moves[i][2];
+      numReduced++;
+      i+=2;
+    } else {
+      reduced[numReduced][0] = moves[i][0];
+      reduced[numReduced][1] = moves[i][1];
+      reduced[numReduced][2] = moves[i][2];
+      numReduced++;
+    }
+  }
+  
+  numMoves = numReduced;
+  
+  memcpy(moves, reduced, sizeof(int)*3*numReduced);
 }
 
 // fill the diff matrix with current - previous scans
@@ -202,49 +342,39 @@ void setDiff() {
   }  
 }
 
-// identify which piece has been moved, update board accordingly, print move to lcd
-void calculateMove() {
-  int newPiece[2][2];
-  int numNew = 0;
-  int oldPiece[2][2];
-  int numOld = 0;
-  
+// analyze diff and save new moves made
+void detectMove() {
+  boolean made;
+  short state;
+  int relativeDiff;
   for (int i=0; i < nRows; i++) {
     for (int j=0; j < nRows; j++) {
-      if (diff[i][j] == 1) {
-        numNew++;
-        if (numNew <= 2) {
-          newPiece[numNew-1][0] = i;
-          newPiece[numNew-1][1] = j;
+      state = prevScan[i][j];
+      for (int k = 0; k < numMoves; k++) {
+        if (moves[k][1] == i && moves[k][2] == j) {
+          state += moves[k][0];
         }
-      } else if (diff[i][j] == -1) {
-        numOld++;
-        if (numOld <= 2) {
-          oldPiece[numOld-1][0] = i;
-          oldPiece[numOld-1][1] = j;
+      }
+      relativeDiff = state - prevScan[i][j];
+      Serial.print("\n");
+      Serial.print(cols[j]);
+      Serial.print(i+1);
+      Serial.print("\trelativeDiff: ");
+      Serial.print(relativeDiff);
+      Serial.print("\tdiff: ");
+      Serial.print(diff[i][j]);
+      if (relativeDiff - diff[i][j] != 0) {
+        if (numMoves < MAX_MOVES) {
+          numMoves++;
+          moves[numMoves-1][0] = diff[i][j] - relativeDiff;
+          moves[numMoves-1][1] = i;
+          moves[numMoves-1][2] = j;
+        }
+        else {
+          // TOO MANY MOVES????
         }
       }
     }
-  }
-  
-  if (numNew == 1 && numOld == 1) {
-    lcd.clear();
-    int piece = board[oldPiece[0][0]][oldPiece[0][1]];
-    if (piece < 0) {
-      lcd.print("B");
-      lcd.write(byte(-1*piece));
-    } else {
-      lcd.print("W");
-      lcd.write(byte(piece));
-    }
-    lcd.print(" ");
-    lcd.print(rows[oldPiece[0][1]]);
-    lcd.print(oldPiece[0][0]+1);
-    lcd.print(" to ");
-    lcd.print(rows[newPiece[0][1]]);
-    lcd.print(newPiece[0][0]+1);
-    board[newPiece[0][0]][newPiece[0][1]] = board[oldPiece[0][0]][oldPiece[0][1]];
-    board[oldPiece[0][0]][oldPiece[0][1]] = 0;   
   }
 }
 
@@ -266,7 +396,7 @@ void outputBoard() {
   for (int i = 0; i < nRows; i++) {
     for (int j = 0; j < nRows; j++) {
       if (currScan[i][j] == HIGH) {
-        lcd.print(rows[j]);
+        lcd.print(cols[j]);
         lcd.print(i+1);
         lcd.print(" ");
         count++;
@@ -283,10 +413,10 @@ void outputBoard() {
 
 
 void scanRow(int row) {
-  digitalWrite(row + 2, HIGH);
+  digitalWrite(row + 36, HIGH);
   for (int i = 0; i < nRows; i++) {
     if (i != row) {
-      digitalWrite(i+2, LOW);
+      digitalWrite(i+36, LOW);
     }
   }
   
@@ -298,15 +428,15 @@ void scanRow(int row) {
 }
 
 void promotePawn() {
-  if (enable && digitalRead(scan)){
+  if (enableScan && digitalRead(endTurn)){
     iPromotion = (iPromotion + 1) % nPromotions;
-    enable = false;
+    enableScan = false;
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print(promotions[iPromotion].statement + " ");
     lcd.write(byte(promotions[iPromotion].symbol));
-  } else if (!digitalRead(scan)) {
-    enable = true;
+  } else if (!digitalRead(endTurn)) {
+    enableScan = true;
   }
 }
 
