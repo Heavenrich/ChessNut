@@ -52,8 +52,9 @@ void setup() {
   state = NEW_GAME;
   
   //turn off LEDs if applicable
-  for(int i = 0; i < 7; i++) {
-    digitalWrite(ledControl[i],LOW);
+  for(short i = 0; i < 7; i++) {
+    pinMode(ledControl[i], OUTPUT);
+    digitalWrite(ledControl[i], LOW);
   }
 }
 
@@ -71,61 +72,4 @@ void loop() {
       state = SCANNING;
     }
   }
-}
-
-void setLEDPattern(int row, int column) {
-  int tmp[2] = {row, column};
-  for(int i = 0; i < 4; i+=3) {
-    switch(tmp[i]) {
-       case 1:
-         digitalWrite(ledControl[0+i],LOW);
-         digitalWrite(ledControl[1+i],LOW);
-         digitalWrite(ledControl[2+i],LOW);
-         break;
-      case 2:
-         digitalWrite(ledControl[0+i],LOW);
-         digitalWrite(ledControl[1+i],LOW);
-         digitalWrite(ledControl[2+i],HIGH);
-         break;
-      case 3:
-         digitalWrite(ledControl[0+i],LOW);
-         digitalWrite(ledControl[1+i],HIGH);
-         digitalWrite(ledControl[2+i],LOW);
-         break;
-      case 4:
-         digitalWrite(ledControl[0+i],LOW);
-         digitalWrite(ledControl[1+i],HIGH);
-         digitalWrite(ledControl[2+i],HIGH);
-         break;
-      case 5:
-         digitalWrite(ledControl[0+i],HIGH);
-         digitalWrite(ledControl[1+i],LOW);
-         digitalWrite(ledControl[2+i],LOW);
-         break;
-      case 6:
-         digitalWrite(ledControl[0+i],HIGH);
-         digitalWrite(ledControl[1+i],LOW);
-         digitalWrite(ledControl[2+i],HIGH);
-         break;
-      case 7:
-         digitalWrite(ledControl[0+i],HIGH);
-         digitalWrite(ledControl[1+i],HIGH);
-         digitalWrite(ledControl[2+i],LOW);
-         break;
-      case 8:
-         digitalWrite(ledControl[0+i],HIGH);
-         digitalWrite(ledControl[1+i],HIGH);
-         digitalWrite(ledControl[2+i],HIGH);
-         break;
-       default:
-         digitalWrite(ledControl[0+i],LOW);
-         digitalWrite(ledControl[1+i],LOW);
-         digitalWrite(ledControl[2+i],LOW);
-         break;
-     }
-  }
-}
-
-void flipLEDs() {
-  digitalWrite(ledControl[6],!(digitalRead(ledControl[6])));
 }
