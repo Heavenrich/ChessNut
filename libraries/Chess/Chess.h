@@ -13,9 +13,9 @@ class Chess {
     boolean initialize();
     void newGame();
     boolean loop();
+    boolean scanBoard(boolean continuous = true, boolean output = true);
     
   private:
-    boolean scanBoard(boolean continuous = true, boolean output = true);
     void scanRow(short row);
     void setDiff();
     void detectMove();
