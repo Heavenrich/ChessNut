@@ -237,7 +237,7 @@ boolean Chess::turnEnd() {
         validCastle = false;
         Serial.println("validCastle failed");
       }
-      if (moves[i][0] > 0) {  
+      if (moves[i][0] < 0) {
         if (moves[i][2] != castlingDepartures[castlingKing][0]
             && moves[i][2] != castlingDepartures[castlingKing][1])
         {
