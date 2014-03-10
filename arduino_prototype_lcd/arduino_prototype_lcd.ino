@@ -16,7 +16,7 @@ short gridOutput[8] = {
   36,37,38,39,40,41,42,43
 };
 
-Promotion promotion(1, 2, 3, &lcd); // TODO: need to set 1, 2, 3 to pins for buttons up, down, select
+Promotion promotion(12, 12, 11, &lcd); // TODO: need to set 1, 2, 3 to pins for buttons up, down, select
 
 short nRows = 8;
 short period = 50;
@@ -65,11 +65,16 @@ void loop() {
       chess.newGame();
     }
   } else if (state == SCANNING) {
-    chess.loop();
+    short chessLoop = chess.loop();
+    if (chessLoop == Chess::loop_promotion) {
+      state = PROMOTION;
+      promotion.reset();
+    }
   } else if (state == PROMOTION) {
     short promotedPiece = promotion.loop();
     if (promotedPiece != 0) {
       state = SCANNING;
+      chess.setPromotedPiece(promotedPiece);
     }
   }
 }

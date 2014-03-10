@@ -15,7 +15,7 @@ Promotion::Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *l) :
   statements[1] = "Promote to N?";
 
   symbols[0] = 5;
-  symbols[1] = 1;
+  symbols[1] = 2;
 }
 
 void Promotion::reset() {
@@ -42,14 +42,13 @@ short Promotion::loop() {
   } else if (!digitalRead(up)) {
     enableUp = true;
   }
-  
-  if (enableDown && digitalRead(down)){
+  /*else if (enableDown && digitalRead(down)){
     i = (i + n - 1) % n;
     enableDown = false;
     writeLCD();
   } else if (!digitalRead(down)) {
     enableDown = true;
-  }
+  }*/
   
   return 0;
 }

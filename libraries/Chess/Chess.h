@@ -11,8 +11,13 @@ class Chess {
     Chess(short period, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean initialize();
     void newGame();
-    boolean loop();
+    short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
+    void setPromotedPiece(short piece);
+
+    static const short loop_noUpdate = 0;
+    static const short loop_endTurn = 1;
+    static const short loop_promotion = 2;
     
   private:
     void scanRow(short row);

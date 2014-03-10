@@ -84,12 +84,20 @@ void Chess::newGame() {
   gameOn = true;
 }
 
-boolean Chess::loop() {
+short Chess::loop() {
   if (enableEndTurn && digitalRead(endTurn)) {
     if (turnEnd()) {
-      whosTurn *= -1;
       numMoves = 0;
-      return true;
+      if (moves[1][1] == (whosTurn + 1) * 7 / 2
+          && abs(board[moves[1][1]][moves[1][2]]) == pawn
+      ) {
+        Serial.println("promotion");
+        return loop_promotion;
+      } else {
+        Serial.println("not promotion");
+        whosTurn *= -1;
+        return loop_endTurn;
+      }
     }
     enableEndTurn = false;
   } else if (!digitalRead(endTurn)) {
@@ -101,7 +109,7 @@ boolean Chess::loop() {
     detectMove();
   }
   
-  return false;
+  return loop_noUpdate;
 }
 
 boolean Chess::scanBoard(boolean continuous, boolean output) {
@@ -121,6 +129,11 @@ boolean Chess::scanBoard(boolean continuous, boolean output) {
   }
   
   return scanned;
+}
+
+void Chess::setPromotedPiece(short piece) {
+  board[moves[1][1]][moves[1][2]] = whosTurn * piece;
+  whosTurn *= -1;
 }
 
 void Chess::scanRow(short row) {
