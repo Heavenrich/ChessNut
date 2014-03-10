@@ -141,6 +141,10 @@ boolean enableEndTurn = true;
 int scan = 12;
 boolean enableScan = true;
 
+int ledControl[7] = {
+  44,45,46,47,48,49,50
+} //A-C for row, A-C for column, input voltage
+
 void setup() {
   Serial.begin(9600);
   
@@ -157,6 +161,12 @@ void setup() {
   lcd.createChar(5, queenChar);
   lcd.createChar(6, kingChar);
   lcd.begin(16, 2);
+  
+  //turn off LEDs if applicable
+  for(int i = 0; i < 7; i++) {
+    digitalWrite(ledControl[i],LOW);
+  }
+  
 }
 
 // true if a game is underway
@@ -473,4 +483,61 @@ boolean initialize() {
   } 
  
   return initialized;
+}
+
+void setLEDPattern(int row, int column) {
+  int[2] tmp = {row, column);
+  for(int i = 0; i < 4; i+=3) {
+    switch(tmp[i]) {
+       case 1:
+         digitalWrite(ledControl[0+i],LOW);
+         digitalWrite(ledControl[1+i],LOW);
+         digitalWrite(ledControl[2+i],LOW);
+         break;
+      case 2:
+         digitalWrite(ledControl[0+i],LOW);
+         digitalWrite(ledControl[1+i],LOW);
+         digitalWrite(ledControl[2+i],HIGH);
+         break;
+      case 3:
+         digitalWrite(ledControl[0+i],LOW);
+         digitalWrite(ledControl[1+i],HIGH);
+         digitalWrite(ledControl[2+i],LOW);
+         break;
+      case 4:
+         digitalWrite(ledControl[0+i],LOW);
+         digitalWrite(ledControl[1+i],HIGH);
+         digitalWrite(ledControl[2+i],HIGH);
+         break;
+      case 5:
+         digitalWrite(ledControl[0+i],HIGH);
+         digitalWrite(ledControl[1+i],LOW);
+         digitalWrite(ledControl[2+i],LOW);
+         break;
+      case 6:
+         digitalWrite(ledControl[0+i],HIGH);
+         digitalWrite(ledControl[1+i],LOW);
+         digitalWrite(ledControl[2+i],HIGH);
+         break;
+      case 7:
+         digitalWrite(ledControl[0+i],HIGH);
+         digitalWrite(ledControl[1+i],HIGH);
+         digitalWrite(ledControl[2+i],LOW);
+         break;
+      case 8:
+         digitalWrite(ledControl[0+i],HIGH);
+         digitalWrite(ledControl[1+i],HIGH);
+         digitalWrite(ledControl[2+i],HIGH);
+         break;
+       default:
+         digitalWrite(ledControl[0+i],LOW);
+         digitalWrite(ledControl[1+i],LOW);
+         digitalWrite(ledControl[2+i],LOW);
+         break;
+     }
+  }
+}
+
+void flipLEDs() {
+  digitalWrite(ledControl[6],!(digitalRead(ledControl[6]));
 }
