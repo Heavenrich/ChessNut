@@ -1,18 +1,5 @@
 #include "Chess.h"
 
-Chess::Chess() :
-  pawn(1),
-  knight(2),
-  bishop(3),
-  rook(4),
-  queen(5),
-  king(6),
-  period(50),
-  nRows(8),
-  endTurn(11),
-  scan(12)
-{}
-
 Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], short inPins[8], short outPins[8]) :
   pawn(1),
   knight(2),
@@ -29,6 +16,8 @@ Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], 
   gameOn(false),
   whosTurn(1),
   numMoves(0),
+  castlingKing(0),
+  castlingQueen(1),
   lcd(l)
 {
   for (short i = 0; i < nRows; i++) {
@@ -37,24 +26,36 @@ Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], 
     gridOutput[i] = outPins[i];
     currScan[0][i] = 0;
   }
+  castlingDepartures[castlingKing][0] = 4;
+  castlingDepartures[castlingKing][1] = 7;
+  castlingDepartures[castlingQueen][0] = 4;
+  castlingDepartures[castlingQueen][1] = 0;
+  castlingArrivals[castlingKing][0] = 6;
+  castlingArrivals[castlingKing][1] = 5;
+  castlingArrivals[castlingQueen][0] = 2;
+  castlingArrivals[castlingQueen][1] = 3;
 }
 
 // determine if the board has been set up in the standard starting position
 // if it has, then initialize the board matrix and return true
 // else return false
 boolean Chess::initialize() {
-  scanBoard(false, false);
-  boolean initialized = true;
-  for (short i=0; i < nRows && initialized; i ++) {
-    for (short j=0; j < nRows; j++) {
-      if (i == 0 || i == 1 || i == 6 || i == 7) {
-        if (currScan[i][j] != 1) {
-          initialized = false;
-          break;
-        } 
-      } else if (currScan[i][j] == 1) {
-          initialized = false;
-          break;
+  boolean initialized = false;
+  if (scanBoard(false, false)) {
+    Serial.println("initialize");
+    initialized = true;
+    for (short i=0; i < nRows && initialized; i ++) {
+      for (short j=0; j < nRows; j++) {
+        if (i == 0 || i == 1 || i == 6 || i == 7) {
+          if (currScan[i][j] != 1) {
+            initialized = false;
+            Serial.println("not initialized: " + String(i) + " " + String(j));
+            break;
+          } 
+        } else if (currScan[i][j] == 1) {
+            initialized = false;
+            break;
+        }
       }
     }
   }
@@ -94,7 +95,7 @@ boolean Chess::loop() {
   } else if (!digitalRead(endTurn)) {
     enableEndTurn = true;
   }
-  if (scanBoard(false, false)) {
+  if (scanBoard(true, false)) {
     setDiff();
     memcpy(prevScan, currScan, sizeof(prevScan));
     detectMove();
@@ -190,7 +191,11 @@ boolean Chess::turnEnd() {
     Serial.println(moves[i][1]+1);
   }
   
-  if (numMoves == 2) {
+  if (numMoves == 0) {
+    lcd->clear();
+    lcd->print("no moves");
+    return false;
+  } if (numMoves == 2) {
     if (
       moves[0][0] != -1 
       || moves[1][0] != 1
@@ -198,6 +203,7 @@ boolean Chess::turnEnd() {
     ) {
       lcd->clear();
       lcd->print("invalid move");
+      Serial.println("invalid move " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
       return false;
     }
     
@@ -220,6 +226,70 @@ boolean Chess::turnEnd() {
     
     return true;
   }
+  // castling
+  else if (numMoves == 4) {
+    boolean validCastle = true;
+    boolean validKingSide = true;
+    boolean validQueenSide = true;
+    short castleColumn = (1 - whosTurn) * 7 / 2;
+    for (short i = 0; i < numMoves; i++) {
+      if (moves[i][1] != castleColumn) {
+        validCastle = false;
+        Serial.println("validCastle failed");
+      }
+      if (moves[i][0] > 0) {  
+        if (moves[i][2] != castlingDepartures[castlingKing][0]
+            && moves[i][2] != castlingDepartures[castlingKing][1])
+        {
+          validKingSide = false;
+          Serial.println("valid king side failed by departure");
+        }
+        if (moves[i][2] != castlingDepartures[castlingQueen][0]
+            && moves[i][2] != castlingDepartures[castlingQueen][1])
+        {
+          validQueenSide = false;
+          Serial.println("valid queen side failed by departure");
+        }
+      } else {
+        if (moves[i][2] != castlingArrivals[castlingKing][0]
+            && moves[i][2] != castlingArrivals[castlingKing][1])
+        {
+          validKingSide = false;
+          Serial.println("valid king side failed by arrival");
+        }
+        if (moves[i][2] != castlingArrivals[castlingQueen][0]
+            && moves[i][2] != castlingArrivals[castlingQueen][1])
+        {
+          validQueenSide = false;
+          Serial.println("valid queen side failed by arrival");
+        }
+      }
+    }
+    if (validCastle && (validKingSide || validQueenSide)) {
+      debugScan(prevScan);
+      lcd->clear();
+      if (whosTurn < 0) {
+        lcd->print("B");
+      } else {
+        lcd->print("W");
+      }
+      lcd->print("O-O");
+      if (validQueenSide) {
+        lcd->print("-O");
+        board[castleColumn][castlingArrivals[castlingQueen][0]] = king;
+        board[castleColumn][castlingArrivals[castlingQueen][1]] = rook;
+        board[castleColumn][castlingDepartures[castlingQueen][0]] = 0;
+        board[castleColumn][castlingDepartures[castlingQueen][1]] = 0;
+      } else {
+        board[castleColumn][castlingArrivals[castlingKing][0]] = king;
+        board[castleColumn][castlingArrivals[castlingKing][1]] = rook;
+        board[castleColumn][castlingDepartures[castlingKing][0]] = 0;
+        board[castleColumn][castlingDepartures[castlingKing][1]] = 0;
+      }
+      
+      return true;
+    }
+  }
   
   lcd->clear();
   lcd->print("too many moves");
@@ -235,7 +305,7 @@ void Chess::reduceMoves() {
     diffSum += moves[i][0];
   }
   if (diffSum == 0 || diffSum == -1) {
-    for (short i = 0; i < numMoves; i++) {
+    for (short i = numMoves - 1; i >= 0; i--) {
       boolean match = false;
       for (short j = 0; j < numReduced && !match; j++) {
         if (moves[i][1] == reduced[j][1]
@@ -270,7 +340,7 @@ void Chess::reduceMoves() {
     
   
   numMoves = 0;
-  for (short i = 0; i < numReduced; i++) {
+  for (short i = numReduced - 1; i >= 0; i--) {
     if (reduced[i][0] != 0) {
       memcpy(moves[numMoves], reduced[i], sizeof(reduced[i]));
       numMoves++;

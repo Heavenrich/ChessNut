@@ -8,7 +8,6 @@
 
 class Chess {
   public:
-    Chess();
     Chess(short period, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean initialize();
     void newGame();
@@ -51,6 +50,10 @@ class Chess {
     short numMoves;
     
     char cols[8];
+    short castlingArrivals[2][2];
+    short castlingDepartures[2][2];
+    const short castlingKing;
+    const short castlingQueen;
     short gridInput[8];
     short gridOutput[8];
     

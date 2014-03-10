@@ -1,5 +1,5 @@
 boolean ledInput;
-int ledControl[7] = {
+short ledControl[7] = {
   44,45,46,47,48,49,50
 }; //A-C for row, A-C for column, input voltage
 
