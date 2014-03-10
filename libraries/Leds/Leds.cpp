@@ -26,57 +26,13 @@ void Leds::lightWhosTurn(short whosTurn) {
 
 void Leds::setLED(boolean isColumn, int index) {
   int i = 0;
-  if (i) {
+  if (isColumn) {
     i = 3;
   }
-  switch(index) {
-     case 0:
-       digitalWrite(ledControl[0+i],LOW);
-       digitalWrite(ledControl[1+i],LOW);
-       digitalWrite(ledControl[2+i],LOW);
-       break;
-    case 1:
-       digitalWrite(ledControl[0+i],HIGH);
-       digitalWrite(ledControl[1+i],LOW);
-       digitalWrite(ledControl[2+i],LOW);
-       break;
-    case 2:
-       digitalWrite(ledControl[0+i],LOW);
-       digitalWrite(ledControl[1+i],HIGH);
-       digitalWrite(ledControl[2+i],LOW);
-       break;
-    case 3:
-       digitalWrite(ledControl[0+i],HIGH);
-       digitalWrite(ledControl[1+i],HIGH);
-       digitalWrite(ledControl[2+i],LOW);
-       break;
-    case 4:
-       digitalWrite(ledControl[0+i],LOW);
-       digitalWrite(ledControl[1+i],LOW);
-       digitalWrite(ledControl[2+i],HIGH);
-       break;
-    case 5:
-       digitalWrite(ledControl[0+i],HIGH);
-       digitalWrite(ledControl[1+i],LOW);
-       digitalWrite(ledControl[2+i],HIGH);
-       break;
-    case 6:
-       digitalWrite(ledControl[0+i],LOW);
-       digitalWrite(ledControl[1+i],HIGH);
-       digitalWrite(ledControl[2+i],HIGH);
-       break;
-    case 7:
-       digitalWrite(ledControl[0+i],HIGH);
-       digitalWrite(ledControl[1+i],HIGH);
-       digitalWrite(ledControl[2+i],HIGH);
-       break;
-     default:
-       digitalWrite(ledControl[0+i],LOW);
-       digitalWrite(ledControl[1+i],LOW);
-       digitalWrite(ledControl[2+i],LOW);
-       break;
-   }
-  }
+  
+  digitalWrite(ledControl[0+i], byte(index) & byte(1));
+  digitalWrite(ledControl[1+i], (byte(index) >> 1) & byte(1));
+  digitalWrite(ledControl[2+i], (byte(index) >> 2) & byte(1));
 }
 
 boolean flipLEDs(boolean flip, boolean input) {
