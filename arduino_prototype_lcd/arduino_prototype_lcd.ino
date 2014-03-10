@@ -143,7 +143,7 @@ boolean enableScan = true;
 
 int ledControl[7] = {
   44,45,46,47,48,49,50
-} //A-C for row, A-C for column, input voltage
+}; //A-C for row, A-C for column, input voltage
 
 void setup() {
   Serial.begin(9600);
@@ -486,7 +486,7 @@ boolean initialize() {
 }
 
 void setLEDPattern(int row, int column) {
-  int[2] tmp = {row, column);
+  int tmp[2] = {row, column};
   for(int i = 0; i < 4; i+=3) {
     switch(tmp[i]) {
        case 1:
@@ -539,5 +539,5 @@ void setLEDPattern(int row, int column) {
 }
 
 void flipLEDs() {
-  digitalWrite(ledControl[6],!(digitalRead(ledControl[6]));
+  digitalWrite(ledControl[6],!(digitalRead(ledControl[6])));
 }
