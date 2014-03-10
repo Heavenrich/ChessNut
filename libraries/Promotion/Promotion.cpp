@@ -30,7 +30,7 @@ void Promotion::writeLCD() {
   lcd->write(byte(symbols[i]));
 }
 
-char Promotion::loop() {  
+short Promotion::loop() {  
   if (digitalRead(select)){
     return symbols[i];
   }

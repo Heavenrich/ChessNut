@@ -7,7 +7,7 @@
 class Symbols {
   public:
     Symbols();
-    void createChars(LiquidCrystal *lcd);
+    static void createChars(LiquidCrystal *lcd);
 };
 
 #endif

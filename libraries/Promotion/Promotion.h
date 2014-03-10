@@ -8,15 +8,15 @@ class Promotion {
   public:
     Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *lcd);
     void reset();
-    char loop();
+    short loop();
   private:
     String statements[2];
-    char symbols[2];
+    short symbols[2];
     short i;
     const int n;
-    char up;
-    char down;
-    char select;
+    short up;
+    short down;
+    short select;
     boolean enableUp;
     boolean enableDown;
     boolean enableSelect;
