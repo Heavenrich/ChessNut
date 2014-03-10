@@ -73,7 +73,6 @@ boolean Chess::initialize() {
     }, sizeof(board));
   } 
  
-  Serial.println("initialized" + String(initialized));
   return initialized;
 }
 
@@ -224,6 +223,7 @@ boolean Chess::turnEnd() {
   
   lcd->clear();
   lcd->print("too many moves");
+
   return false;
 }
 
@@ -234,7 +234,7 @@ void Chess::reduceMoves() {
   for (short i = 0; i < numMoves; i++) {
     diffSum += moves[i][0];
   }
-  if (diffSum == 0) {
+  if (diffSum == 0 || diffSum == -1) {
     for (short i = 0; i < numMoves; i++) {
       boolean match = false;
       for (short j = 0; j < numReduced && !match; j++) {
@@ -250,7 +250,24 @@ void Chess::reduceMoves() {
         numReduced++;
       }
     }
+    if (diffSum == -1) {
+      short oppositeTakes = 0;
+      short oppositeTaken = 0;
+      for (short i = 0; i < numReduced; i++) {
+        // covers resonable cases (still edge cases) for correct taken piece
+        if (reduced[i][0] == 0
+            && board[reduced[i][1]][reduced[i][2]] * whosTurn < 0)
+        {
+          oppositeTakes++;
+          oppositeTaken = i;
+        }
+      }
+      if (oppositeTakes > 0) {
+        reduced[oppositeTaken][0] = 1;
+      }
+    }
   }
+    
   
   numMoves = 0;
   for (short i = 0; i < numReduced; i++) {
