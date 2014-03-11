@@ -1,13 +1,13 @@
 #include "Chess.h"
 
-Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], short inPins[8], short outPins[8]) :
+Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], short inPins[8], short outPins[8]) :
   pawn(1),
   knight(2),
   bishop(3),
   rook(4),
   queen(5),
   king(6),
-  period(p),
+  delayRead(d),
   nRows(8),
   endTurn(end),
   enableEndTurn(true),
@@ -41,15 +41,13 @@ Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], 
 // else return false
 boolean Chess::initialize() {
   boolean initialized = false;
-  if (scanBoard(false, false)) {
-    Serial.println("initialize");
+  if (scanBoard(true, true)) {
     initialized = true;
     for (short i=0; i < nRows && initialized; i ++) {
       for (short j=0; j < nRows; j++) {
         if (i == 0 || i == 1 || i == 6 || i == 7) {
           if (currScan[i][j] != 1) {
             initialized = false;
-            Serial.println("not initialized: " + String(i) + " " + String(j));
             break;
           } 
         } else if (currScan[i][j] == 1) {
@@ -95,7 +93,7 @@ short Chess::loop() {
         Serial.println("promotion");
         return loop_promotion;
       } else {
-        Serial.println("not promotion");
+        Serial.println("endTurn");
         whosTurn *= -1;
         return loop_endTurn;
       }
@@ -132,6 +130,7 @@ boolean Chess::scanBoard(boolean continuous, boolean output) {
 }
 
 void Chess::setPromotedPiece(short piece) {
+  Serial.println("pawn promoted to " + String(whosTurn * piece));
   board[moves[1][1]][moves[1][2]] = whosTurn * piece;
   whosTurn *= -1;
 }
@@ -144,7 +143,7 @@ void Chess::scanRow(short row) {
     }
   }
   
-  delay(period);
+  delay(delayRead);
   
   for (short i = 0; i < nRows; i++) {
     currScan[row][i] = digitalRead(gridInput[i]);
@@ -169,6 +168,14 @@ void Chess::detectMove() {
           moves[numMoves][0] = diff[i][j];
           moves[numMoves][1] = i;
           moves[numMoves][2] = j;
+          Serial.print("Move ");
+          Serial.print(numMoves);
+          Serial.print(": ");
+          Serial.print(moves[numMoves][0]);
+          Serial.print(cols[j]);
+          Serial.print(i+1);
+          Serial.print(" detected at millis() = ");
+          Serial.println(millis());
           numMoves++;
         }
         else {
@@ -184,14 +191,6 @@ boolean Chess::turnEnd() {
   Serial.println(whosTurn);
   Serial.print("numMoves: ");
   Serial.println(numMoves);
-  for (short i=0; i < numMoves; i++) {
-    Serial.print("Move ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.print(moves[i][0]);
-    Serial.print(cols[moves[i][2]]);
-    Serial.println(moves[i][1]+1);
-  }
   reduceMoves();
   Serial.print("numMoves reduced: ");
   Serial.println(numMoves);
@@ -209,10 +208,14 @@ boolean Chess::turnEnd() {
     lcd->print("no moves");
     return false;
   } if (numMoves == 2) {
+    short fromIndex = 0;
+    if (moves[0][1] == -1) {
+      fromIndex = 1;
+    }
     if (
-      moves[0][0] != -1 
-      || moves[1][0] != 1
-      || board[moves[0][1]][moves[0][2]]*whosTurn < 0
+      moves[0][0] * moves[1][0] > 0
+      || board[moves[fromIndex][1]][moves[fromIndex][2]]*whosTurn <= 0
+      || board[moves[abs(fromIndex - 1)][1]][moves[abs(fromIndex - 1)][2]]*whosTurn > 0
     ) {
       lcd->clear();
       lcd->print("invalid move");
@@ -255,26 +258,22 @@ boolean Chess::turnEnd() {
             && moves[i][2] != castlingDepartures[castlingKing][1])
         {
           validKingSide = false;
-          Serial.println("valid king side failed by departure");
         }
         if (moves[i][2] != castlingDepartures[castlingQueen][0]
             && moves[i][2] != castlingDepartures[castlingQueen][1])
         {
           validQueenSide = false;
-          Serial.println("valid queen side failed by departure");
         }
       } else {
         if (moves[i][2] != castlingArrivals[castlingKing][0]
             && moves[i][2] != castlingArrivals[castlingKing][1])
         {
           validKingSide = false;
-          Serial.println("valid king side failed by arrival");
         }
         if (moves[i][2] != castlingArrivals[castlingQueen][0]
             && moves[i][2] != castlingArrivals[castlingQueen][1])
         {
           validQueenSide = false;
-          Serial.println("valid queen side failed by arrival");
         }
       }
     }
@@ -289,13 +288,13 @@ boolean Chess::turnEnd() {
       lcd->print("O-O");
       if (validQueenSide) {
         lcd->print("-O");
-        board[castleColumn][castlingArrivals[castlingQueen][0]] = king;
-        board[castleColumn][castlingArrivals[castlingQueen][1]] = rook;
+        board[castleColumn][castlingArrivals[castlingQueen][0]] = king * whosTurn;
+        board[castleColumn][castlingArrivals[castlingQueen][1]] = rook * whosTurn;
         board[castleColumn][castlingDepartures[castlingQueen][0]] = 0;
         board[castleColumn][castlingDepartures[castlingQueen][1]] = 0;
       } else {
-        board[castleColumn][castlingArrivals[castlingKing][0]] = king;
-        board[castleColumn][castlingArrivals[castlingKing][1]] = rook;
+        board[castleColumn][castlingArrivals[castlingKing][0]] = king * whosTurn;
+        board[castleColumn][castlingArrivals[castlingKing][1]] = rook * whosTurn;
         board[castleColumn][castlingDepartures[castlingKing][0]] = 0;
         board[castleColumn][castlingDepartures[castlingKing][1]] = 0;
       }
@@ -349,14 +348,13 @@ void Chess::reduceMoves() {
         reduced[oppositeTaken][0] = 1;
       }
     }
-  }
-    
-  
-  numMoves = 0;
-  for (short i = numReduced - 1; i >= 0; i--) {
-    if (reduced[i][0] != 0) {
-      memcpy(moves[numMoves], reduced[i], sizeof(reduced[i]));
-      numMoves++;
+
+    numMoves = 0;
+    for (short i = numReduced - 1; i >= 0; i--) {
+      if (reduced[i][0] != 0) {
+        memcpy(moves[numMoves], reduced[i], sizeof(reduced[i]));
+        numMoves++;
+      }
     }
   }
 }

@@ -8,7 +8,7 @@
 
 class Chess {
   public:
-    Chess(short period, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    Chess(short delayRead, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean initialize();
     void newGame();
     short loop();
@@ -36,7 +36,7 @@ class Chess {
     const short queen;
     const short king;
     
-    const short period;
+    const short delayRead;
     const short nRows;
     const short endTurn;
     boolean enableEndTurn;
