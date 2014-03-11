@@ -86,6 +86,7 @@ void Chess::newGame() {
 
 short Chess::loop() {
   if (enableEndTurn && digitalRead(endTurn)) {
+    enableEndTurn = false;
     if (turnEnd()) {
       numMoves = 0;
       if (moves[1][1] == (whosTurn + 1) * 7 / 2
@@ -99,7 +100,6 @@ short Chess::loop() {
         return loop_endTurn;
       }
     }
-    enableEndTurn = false;
   } else if (!digitalRead(endTurn)) {
     enableEndTurn = true;
   }
