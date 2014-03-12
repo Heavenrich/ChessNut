@@ -452,20 +452,17 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 			if (rowsMoved == 2 && moves[0][0] != (7+whosTurn)%7) {
 				return false;
 			}
-			
 			return true;
 		// Knight
 		case 2:
 			if (abs(colsMoved) > 2 || abs(rowsMoved) > 2) {
 				return false;
-			}
-			if (
+			} else if (
 				(abs(colsMoved) == 2 && abs(rowsMoved) != 1)
 				|| (abs(colsMoved) == 1 && abs(rowsMoved) != 2)
 			) {
 				return false;
 			}
-			
 			return true;
 		// Bishop
 		case 3:
@@ -475,6 +472,9 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 			return true;
 		// Rook:
 		case 4:
+			if (colsMoved != 0 || rowsMoved != 0) {
+				return false;
+			}
 			return true;
 		// Queen;
 		case 5:
@@ -486,9 +486,7 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 		case 6:
 			if (abs(colsMoved) > 1 || abs(rowsMoved) > 1) {
 				return false;
-			}
-			
-			if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
+			} else if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
 				return false;
 			}
 			return true;
