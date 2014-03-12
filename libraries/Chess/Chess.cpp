@@ -80,6 +80,10 @@ boolean Chess::initialize() {
       {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
       {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
     }, sizeof(board));
+    kingPositions[0][0] = 7;
+    kingPositions[0][1] = 4;
+    kingPositions[1][0] = 0;
+    kingPositions[1][1] = 4;
   } 
  
   return initialized;
@@ -196,6 +200,8 @@ void Chess::detectMove() {
 }
 
 boolean Chess::turnEnd() {
+  kingAttackers[0] = 0;
+  kingAttackers[1] = 1;
   Serial.print("turn: ");
   Serial.println(whosTurn);
   Serial.print("numMoves: ");
@@ -232,14 +238,27 @@ boolean Chess::turnEnd() {
       return false;
     }
 	
-	short validatorMoves[2][2] =  {{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}};
-	
-	if (!isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
-		Lcd::clearLine(lcd);
-		lcd->print("piece cannot move like so");
-		Serial.println("piece cannot move like so " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
-		return false;
-	}
+    short validatorMoves[2][2] =  {{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}};    
+    if (!isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
+      Lcd::clearLine(lcd);
+      lcd->print("piece cannot move like so");
+      Serial.println("piece cannot move like so " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
+      return false;
+    }
+    
+    if (whosTurn*board[moves[0][1]][moves[0][2]] == 6) {
+      if (inCheck(moves[1][1], moves[1][2], whosTurn)) {
+        Lcd::clearLine(lcd);
+        if (whosTurn < 0) {
+          lcd->print("B");
+        } else {
+          lcd->print("W");
+        }
+        lcd->print(", in check");
+        Serial.println("in check, invalid " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
+        return false;
+      }
+    }
 
     Lcd::clearLine(lcd);
     if (whosTurn < 0) {
@@ -257,7 +276,13 @@ boolean Chess::turnEnd() {
     lcd->print(moves[1][1]+1);
     board[moves[1][1]][moves[1][2]] = board[moves[0][1]][moves[0][2]];
     board[moves[0][1]][moves[0][2]] = 0;
-    
+    if (inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn)) {
+      lcd->print(" X");
+    }
+    if (whosTurn*board[moves[0][1]][moves[0][2]] == 6) {
+      kingPositions[(whosTurn+1)/2][0] = moves[1][1];
+      kingPositions[(whosTurn+1)/2][1] = moves[1][2];
+    }
     return true;
   }
   // castling
@@ -497,7 +522,7 @@ boolean Chess::isValidMove(short piece, short movesToCheck[2][2]) {
 				return false;
 			}
 			
-			if (!checkCollisions(movesToCheck) {
+			if (!checkCollisions(movesToCheck)) {
 				return false;
 			}
 			
@@ -547,4 +572,71 @@ boolean Chess::checkCollisions (short movesToCheck[2][2]) {
 	}
 	
 	return true;
+}
+
+boolean Chess::inCheck(short kingRow, short kingCol, short kingColour) {
+	short col;
+	short row;
+	// One who is in check
+	short victim = (kingColour+1)/2;
+	boolean ownPiece;
+	for (short colDir = -1; colDir < 2; colDir += 2) {
+		for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+			col = kingCol + colDir;
+			row = kingRow + rowDir;
+			ownPiece = false;
+			// queen or bishop
+			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+				if (board[row][col] != 0) {
+					if (board[row][col] > 0 + board[row][col] < 0 == kingColour) {
+						ownPiece = true;
+					} else if (board[row][col] == -5*kingColour || board[row][col] == -3*kingColour){
+						kingAttackers[victim]++;
+					}
+				}
+				col += colDir;
+				row += rowDir;
+			}
+			
+			col = kingCol + (colDir + rowDir)/2;
+			row = kingRow + (colDir + -1*rowDir)/2;
+			ownPiece = false;
+			// queen or rook
+			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+				if (board[row][col] != 0) {
+					if (board[row][col] > 0 + board[row][col] < 0 == kingColour) {
+						ownPiece = true;
+					} else if (board[row][col] == -5*kingColour || board[row][col] == -4*kingColour) {
+						kingAttackers[victim]++;
+					}
+				}
+				col = kingCol + (colDir + rowDir)/2;
+				row = kingRow + (colDir + -1*rowDir)/2;
+			}
+			// knight
+			row = kingRow + rowDir;
+			col = kingCol + 2*colDir;
+			if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -2*kingColour) {
+				kingAttackers[victim]++;
+			}
+			
+			row = kingRow + 2*rowDir;
+			col = kingCol + colDir;
+			if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -2*kingColour) {
+				kingAttackers[victim]++;
+			}
+		}		
+		// Pawn
+		row = kingRow + kingColour;
+		col = kingCol + colDir;
+		if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -1*kingColour) {
+			kingAttackers[victim]++;
+		}
+	}
+
+	if (kingAttackers[victim] > 0) {
+		return true;
+	}
+	
+	return false;
 }
