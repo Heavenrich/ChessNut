@@ -428,6 +428,21 @@ void Chess::outputBoard(boolean debug) {
 
 boolean Chess::isValidMove(short piece, short moves[2][2]) {
 	switch (piece) {
+		// Pawn
+		case 1:
+			// ensure same column
+			if (moves[1][2] != moves[2][2]) {
+				return false;
+			}
+			rowsMoved = (moves[2][1] - moves[1][1])*whosTurn;
+			// ensure proper number of rows moved based on starting position
+			if (rowsMoved < 1 || rowsMoved > 2) {
+				return false;
+			} else if (rowsMoved == 2 && moves[1][1] !=(7+whosTurn)%7)) {
+				return false;
+			}
+			
+			return true;	
 		default:
 			return true;
 	}
