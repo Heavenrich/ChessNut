@@ -15,7 +15,8 @@ class Chess {
     void startGame();
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
-	boolean isValidMove(short piece, short moves[2][2]);
+	boolean isValidMove(short piece, short movesToCheck[2][2]);
+	boolean checkCollisions (short movesToCheck[2][2]);
     void setPromotedPiece(short piece);
 
     static const short loop_noUpdate = 0;

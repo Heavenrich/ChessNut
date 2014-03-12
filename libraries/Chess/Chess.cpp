@@ -234,7 +234,10 @@ boolean Chess::turnEnd() {
 	
 	short validatorMoves[2][2] =  {{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}};
 	
-	if (isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
+	if (!isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
+		Lcd::clearLine(lcd);
+		lcd->print("piece cannot move like so");
+		Serial.println("piece cannot move like so " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
 		return false;
 	}
 
@@ -433,10 +436,12 @@ void Chess::outputBoard(boolean debug) {
   }
 }
 
-boolean Chess::isValidMove(short piece, short moves[2][2]) {
-	short rowsMoved = (moves[0][0] - moves[1][0])*whosTurn;
-	short colsMoved = (moves[0][1] - moves[1][1])*whosTurn;
-
+boolean Chess::isValidMove(short piece, short movesToCheck[2][2]) {
+	short rowsMoved = (movesToCheck[1][0] - movesToCheck[0][0])*whosTurn;
+	short colsMoved = (movesToCheck[1][1] - movesToCheck[0][1])*whosTurn;
+	Serial.println("piece: " + String(piece));
+	Serial.println("rowsMoved: " + String(rowsMoved));
+	Serial.println("colsMoved: " + String(colsMoved));
 	switch (piece) {
 		// Pawn
 		case 1:
@@ -449,7 +454,7 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 				return false;
 			}
 			// if two rows moved, make sure they started in the starting row
-			if (rowsMoved == 2 && moves[0][0] != (7+whosTurn)%7) {
+			if (rowsMoved == 2 && movesToCheck[0][0] != (7+whosTurn)%7) {
 				return false;
 			}
 			return true;
@@ -459,7 +464,7 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 				return false;
 			} else if (
 				(abs(colsMoved) == 2 && abs(rowsMoved) != 1)
-				|| (abs(colsMoved) == 1 && abs(rowsMoved) != 2)
+				|| (abs(rowsMoved) == 2 && abs(colsMoved) != 1)
 			) {
 				return false;
 			}
@@ -467,20 +472,35 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 		// Bishop
 		case 3:
 			if (abs(colsMoved) != abs(rowsMoved)) {
-				return true;
+				return false;
 			}
+			
+			if (!checkCollisions(movesToCheck)) {
+				return false;
+			}
+			
 			return true;
 		// Rook:
 		case 4:
-			if (colsMoved != 0 || rowsMoved != 0) {
+			if (colsMoved != 0 && rowsMoved != 0) {
 				return false;
 			}
+			
+			if (!checkCollisions(movesToCheck)) {
+				return false;
+			}
+			
 			return true;
 		// Queen;
 		case 5:
-			if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
+			if ((colsMoved != 0 && rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
 				return false;
 			}
+			
+			if (!checkCollisions(movesToCheck) {
+				return false;
+			}
+			
 			return true;
 		// King
 		case 6:
@@ -493,4 +513,38 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 		default:
 			return true;
 	}
+}
+
+boolean Chess::checkCollisions (short movesToCheck[2][2]) {
+	short rowsMoved = (movesToCheck[1][0] - movesToCheck[0][0])*whosTurn;
+	short colsMoved = (movesToCheck[1][1] - movesToCheck[0][1])*whosTurn;
+	short rowDirection = (rowsMoved > 0) - (rowsMoved < 0);
+	short colDirection = (colsMoved > 0) - (colsMoved < 0);
+	Serial.println("Cells Checked for Collision:");
+	if (rowsMoved == 0) {
+		for (int i = movesToCheck[0][1] + colDirection; i != movesToCheck[1][1]; i += colDirection) {
+			Serial.println("\t" + cols[i] + String(movesToCheck[0][0]));
+			if (board[movesToCheck[0][0]][i] != 0) {
+				return false;
+			}
+		}
+	} else if (colsMoved == 0) {
+		for (int i = movesToCheck[0][0] + rowDirection; i != movesToCheck[1][0]; i += rowDirection) {
+			Serial.println("\t" + cols[movesToCheck[0][1]] + String(i));
+			if (board[i][movesToCheck[0][1]] != 0) {
+				return false;
+			}
+		}
+	} else {
+		int j = movesToCheck[0][1] + colDirection;
+		for (int i = movesToCheck[0][0] + rowDirection; i != movesToCheck[1][0]; i += rowDirection) {
+			Serial.println("\t" + cols[j] + String(i));
+			if (board[i][j] != 0) {
+				return false;
+			}
+			j += colDirection;
+		}
+	}
+	
+	return true;
 }
