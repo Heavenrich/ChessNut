@@ -9,8 +9,9 @@
 class Chess {
   public:
     Chess(short delayRead, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    boolean newGame();
     boolean initialize();
-    void newGame();
+    void startGame();
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
     void setPromotedPiece(short piece);
@@ -27,7 +28,7 @@ class Chess {
     void reduceMoves();
     void debugBoard(short array[8][8]);
     void debugScan(short array[8][8]);
-    void outputBoard();
+    void outputBoard(boolean debug = true);
     
     const short pawn;
     const short knight;

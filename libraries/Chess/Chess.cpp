@@ -36,6 +36,16 @@ Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], 
   castlingArrivals[castlingQueen][1] = 3;
 }
 
+boolean Chess::newGame() {
+  if (!initialize()) {
+    lcd->clear();
+    lcd->print("set up to start!");
+    return false;
+  } else {
+    startGame();
+  }
+}
+
 // determine if the board has been set up in the standard starting position
 // if it has, then initialize the board matrix and return true
 // else return false
@@ -75,7 +85,7 @@ boolean Chess::initialize() {
   return initialized;
 }
 
-void Chess::newGame() {
+void Chess::startGame() {
   lcd->clear();
   lcd->print("ready to start!");
   Serial.println("ready to start!");
@@ -207,7 +217,7 @@ boolean Chess::turnEnd() {
     lcd->clear();
     lcd->print("no moves");
     return false;
-  } if (numMoves == 2) {
+  } else if (numMoves == 2) {
     short fromIndex = 0;
     if (moves[0][1] == -1) {
       fromIndex = 1;
@@ -392,8 +402,10 @@ void Chess::debugScan(short array[8][8]) {
   Serial.println("  ABCDEFGH  ");
 }
 
-void Chess::outputBoard() {
-  debugScan(currScan);
+void Chess::outputBoard(boolean debug) {
+  if (debug) {
+    debugScan(currScan);
+  }
   
   lcd->clear();
   lcd->setCursor(1,0);

@@ -3,26 +3,16 @@
 
 #include <Arduino.h>
 #include <LiquidCrystal.h>
+#include "Menu.h"
 
-class Promotion {
+class Promotion : public Menu {
   public:
     Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *lcd);
-    void reset();
-    short loop();
   private:
     String statements[2];
     short symbols[2];
-    short i;
-    const int n;
-    short up;
-    short down;
-    short select;
-    boolean enableUp;
-    boolean enableDown;
-    boolean enableSelect;
-    LiquidCrystal *lcd;
     
-    void writeLCD();
+    void writeLCD(short i);
 };
 
 #endif
