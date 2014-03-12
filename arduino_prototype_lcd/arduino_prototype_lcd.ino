@@ -2,6 +2,7 @@
 #include "Chess.h"
 #include "Promotion.h"
 #include "Symbols.h"
+#include "Menu.h"
 
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
@@ -16,12 +17,20 @@ short gridOutput[8] = {
   36,37,38,39,40,41,42,43
 };
 
-Promotion promotion(1, 2, 3, &lcd); // TODO: need to set 1, 2, 3 to pins for buttons up, down, select
-
 short nRows = 8;
-short period = 50;
-short endTurn = 11;
-short scan = 12;
+short delayRead = 1;
+short endTurn = 8;
+short up = 9;
+short down = 10;
+short newGame = 11;
+short loadGame = 12;
+short endGame = 13;
+short scan = 13;
+boolean enableNew = true;
+boolean enableLoad = true;
+boolean enableEnd = true;
+
+Promotion promotion(up, down, endTurn, &lcd);
 
 int ledControl[7] = {
   44,45,46,47,48,49,50
@@ -30,12 +39,13 @@ int ledControl[7] = {
 // for controlling loop()
 #define IDLE 0
 #define NEW_GAME 1
-#define SCANNING 2
-#define LOADING 3
+#define LOAD_GAME 2
+#define SCANNING 3
 #define PROMOTION 4
+#define END_GAME 5
 short state;
 
-Chess chess(period, endTurn, scan, &lcd, cols, gridInput, gridOutput);
+Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
 
 void setup() {
   Serial.begin(9600);
@@ -44,12 +54,15 @@ void setup() {
     pinMode(gridInput[i], INPUT);
     pinMode(gridOutput[i], OUTPUT);
   }
-  digitalWrite(gridOutput[0], HIGH);
   pinMode(endTurn, INPUT);
-  pinMode(scan, INPUT);
+  pinMode(up, INPUT);
+  pinMode(down, INPUT);
+  pinMode(newGame, INPUT);
+  pinMode(loadGame, INPUT);
+  pinMode(endGame, INPUT);
   Symbols::createChars(&lcd);
   lcd.begin(16, 2);
-  state = NEW_GAME;
+  state = IDLE;
   
   //turn off LEDs if applicable
   for(short i = 0; i < 7; i++) {
@@ -59,17 +72,39 @@ void setup() {
 }
 
 void loop() {
+  if (enableNew && digitalRead(newGame)) {
+    enableNew = false;
+    state = NEW_GAME;
+    if (chess.newGame()) {
+      state = SCANNING;
+    }
+  } else if (!digitalRead(newGame)) {
+    enableNew = true;
+  }
+
+  if (enableLoad && digitalRead(loadGame)) {
+    enableLoad = false;
+    //state = LOAD_GAME;
+  } else if (!digitalRead(newGame)) {
+    enableLoad = true;
+  }
+
   if (state == NEW_GAME) {
     if (chess.initialize()) {
       state = SCANNING;
-      chess.newGame();
+      chess.startGame();
     }
   } else if (state == SCANNING) {
-    chess.loop();
+    short chessLoop = chess.loop();
+    if (chessLoop == Chess::loop_promotion) {
+      state = PROMOTION;
+      promotion.reset();
+    }
   } else if (state == PROMOTION) {
     short promotedPiece = promotion.loop();
     if (promotedPiece != 0) {
       state = SCANNING;
+      chess.setPromotedPiece(promotedPiece);
     }
   }
 }

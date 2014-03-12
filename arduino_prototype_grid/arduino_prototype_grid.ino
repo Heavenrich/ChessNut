@@ -19,7 +19,7 @@ short gridOutput[8] = {
 Promotion promotion(1, 2, 3, &lcd); // TODO: need to set 1, 2, 3 to pins for buttons up, down, select
 
 short nRows = 8;
-short period = 50;
+short delayRead = 1;
 short endTurn = 11;
 short scan = 12;
 
@@ -31,7 +31,7 @@ short scan = 12;
 #define PROMOTION 4
 short state;
 
-Chess chess(period, endTurn, scan, &lcd, cols, gridInput, gridOutput);
+Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
 
 void setup() {
   Serial.begin(9600);

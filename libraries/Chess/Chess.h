@@ -8,12 +8,18 @@
 
 class Chess {
   public:
-    Chess(short period, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    Chess(short delayRead, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    boolean newGame();
     boolean initialize();
-    void newGame();
-    boolean loop();
+    void startGame();
+    short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
 	boolean isValidMove(short piece, short moves[2][2]);
+    void setPromotedPiece(short piece);
+
+    static const short loop_noUpdate = 0;
+    static const short loop_endTurn = 1;
+    static const short loop_promotion = 2;
     
   private:
     void scanRow(short row);
@@ -23,7 +29,7 @@ class Chess {
     void reduceMoves();
     void debugBoard(short array[8][8]);
     void debugScan(short array[8][8]);
-    void outputBoard();
+    void outputBoard(boolean debug = true);
     
     const short pawn;
     const short knight;
@@ -32,7 +38,7 @@ class Chess {
     const short queen;
     const short king;
     
-    const short period;
+    const short delayRead;
     const short nRows;
     const short endTurn;
     boolean enableEndTurn;
