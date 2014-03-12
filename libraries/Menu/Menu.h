@@ -7,8 +7,8 @@
 class Menu {
   public:
     Menu(short pinUp, short pinDown, short pinSelect, short nItems, LiquidCrystal *lcd);
-    void reset();
-    short loop();
+    virtual void reset(short item = 0);
+    virtual short loop();
   protected:
     short selection;
     short item;
