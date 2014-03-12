@@ -1,7 +1,7 @@
 #include "Promotion.h"
 
-Promotion::Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *l) :
-  Menu(pinUp, pinDown, pinSelect, l)
+Promotion::Promotion(short pinUp, short pinDown, short pinSelect, LiquidCrystal *l) :
+  Menu(pinUp, pinDown, pinSelect, 2, l)
 {
   statements[0] = "Promote to Q?";
   statements[1] = "Promote to N?";
@@ -10,9 +10,9 @@ Promotion::Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *l) :
   symbols[1] = 2;
 }
 
-void Promotion::writeLCD(short i) {
-  selection = byte(symbols[i]);
-  lcd->clear();
-  lcd->print(statements[i] + " ");
+void Promotion::writeLCD() {
+  selection = byte(symbols[item]);
+  Lcd::clearLine(lcd);
+  lcd->print(statements[item] + " ");
   lcd->write(selection);
 }

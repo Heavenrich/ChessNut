@@ -4,15 +4,16 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include "Menu.h"
+#include "Lcd.h"
 
 class Promotion : public Menu {
   public:
-    Promotion(int pinUp, int pinDown, int pinSelect, LiquidCrystal *lcd);
+    Promotion(short pinUp, short pinDown, short pinSelect, LiquidCrystal *lcd);
   private:
     String statements[2];
     short symbols[2];
     
-    void writeLCD(short i);
+    void writeLCD();
 };
 
 #endif

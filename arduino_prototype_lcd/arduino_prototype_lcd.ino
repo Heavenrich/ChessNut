@@ -3,6 +3,9 @@
 #include "Promotion.h"
 #include "Symbols.h"
 #include "Menu.h"
+#include "Lcd.h"
+#include "ClockMenu.h"
+#include "ClockTimer.h"
 
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
@@ -31,6 +34,8 @@ boolean enableLoad = true;
 boolean enableEnd = true;
 
 Promotion promotion(up, down, endTurn, &lcd);
+ClockMenu clockMenu(up, down, endTurn, &lcd);
+ClockTimer clockTimer(up, down, endTurn, &lcd);
 
 int ledControl[7] = {
   44,45,46,47,48,49,50
@@ -42,7 +47,9 @@ int ledControl[7] = {
 #define LOAD_GAME 2
 #define SCANNING 3
 #define PROMOTION 4
-#define END_GAME 5
+#define CLOCK_MENU 5
+#define CLOCK_TIMER 6
+#define END_GAME 7
 short state;
 
 Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
@@ -74,10 +81,8 @@ void setup() {
 void loop() {
   if (enableNew && digitalRead(newGame)) {
     enableNew = false;
-    state = NEW_GAME;
-    if (chess.newGame()) {
-      state = SCANNING;
-    }
+    state = CLOCK_MENU;
+    clockMenu.reset();
   } else if (!digitalRead(newGame)) {
     enableNew = true;
   }
@@ -105,6 +110,25 @@ void loop() {
     if (promotedPiece != 0) {
       state = SCANNING;
       chess.setPromotedPiece(promotedPiece);
+    }
+  } else if (state == CLOCK_MENU) {
+    short gameType = clockMenu.loop();
+    if (gameType == ClockMenu::timer) {
+      state = CLOCK_TIMER;
+      clockTimer.reset();
+    } else if (gameType == ClockMenu::noTimer) {
+      state = NEW_GAME;
+      if (chess.newGame()) {
+        state = SCANNING;
+      }
+    }
+  } else if (state = CLOCK_TIMER) {
+    short selectedTime = clockTimer.loop();
+    if (selectedTime != 0) {
+      state = NEW_GAME;
+      if (chess.newGame()) {
+        state = SCANNING;
+      }
     }
   }
 }

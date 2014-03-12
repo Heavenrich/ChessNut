@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <LiquidCrystal.h>
+#include "Lcd.h"
 
 #define MAX_MOVES 20
 

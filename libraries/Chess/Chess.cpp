@@ -37,11 +37,12 @@ Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], 
 
 boolean Chess::newGame() {
   if (!initialize()) {
-    lcd->clear();
+    Lcd::clearLine(lcd);
     lcd->print("set up to start!");
     return false;
   } else {
     startGame();
+    return true;
   }
 }
 
@@ -85,7 +86,7 @@ boolean Chess::initialize() {
 }
 
 void Chess::startGame() {
-  lcd->clear();
+  Lcd::clearLine(lcd);
   lcd->print("ready to start!");
   Serial.println("ready to start!");
 }
@@ -212,7 +213,7 @@ boolean Chess::turnEnd() {
   }
   
   if (numMoves == 0) {
-    lcd->clear();
+    Lcd::clearLine(lcd);
     lcd->print("no moves");
     return false;
   } else if (numMoves == 2) {
@@ -225,21 +226,19 @@ boolean Chess::turnEnd() {
       || board[moves[fromIndex][1]][moves[fromIndex][2]]*whosTurn <= 0
       || board[moves[abs(fromIndex - 1)][1]][moves[abs(fromIndex - 1)][2]]*whosTurn > 0
     ) {
-      lcd->clear();
+      Lcd::clearLine(lcd);
       lcd->print("invalid move");
       Serial.println("invalid move " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
       return false;
     }
-    
-	if (
-		!isValidMove(
-			whosTurn*board[moves[0][1]][moves[0][2]], 
-			{{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}})
-		) {
+	
+	short validatorMoves[2][2] =  {{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}};
+	
+	if (isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
 		return false;
 	}
-	
-    lcd->clear();
+
+    Lcd::clearLine(lcd);
     if (whosTurn < 0) {
       lcd->print("B");
     } else {
@@ -295,7 +294,7 @@ boolean Chess::turnEnd() {
     }
     if (validCastle && (validKingSide || validQueenSide)) {
       debugScan(prevScan);
-      lcd->clear();
+      Lcd::clearLine(lcd);
       if (whosTurn < 0) {
         lcd->print("B");
       } else {
@@ -319,7 +318,7 @@ boolean Chess::turnEnd() {
     }
   }
   
-  lcd->clear();
+  Lcd::clearLine(lcd);
   lcd->print("too many moves");
 
   return false;
@@ -435,8 +434,8 @@ void Chess::outputBoard(boolean debug) {
 }
 
 boolean Chess::isValidMove(short piece, short moves[2][2]) {
-	rowsMoved = (moves[0][0] - moves[1][0])*whosTurn;
-	colsMoved = (moves[0][1] - moves[1][1])*whosTurn;
+	short rowsMoved = (moves[0][0] - moves[1][0])*whosTurn;
+	short colsMoved = (moves[0][1] - moves[1][1])*whosTurn;
 
 	switch (piece) {
 		// Pawn
@@ -450,7 +449,7 @@ boolean Chess::isValidMove(short piece, short moves[2][2]) {
 				return false;
 			}
 			// if two rows moved, make sure they started in the starting row
-			if (rowsMoved == 2 && moves[0][0] !=(7+whosTurn)%7)) {
+			if (rowsMoved == 2 && moves[0][0] != (7+whosTurn)%7) {
 				return false;
 			}
 			
