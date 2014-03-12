@@ -13,6 +13,7 @@ class Chess {
     void newGame();
     boolean loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
+	boolean isValidMove(short piece, short moves[2][2]);
     
   private:
     void scanRow(short row);
@@ -38,8 +39,6 @@ class Chess {
     const short scan;
     boolean enableScan;
     
-    // true if a game is underway
-    boolean gameOn;
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
     

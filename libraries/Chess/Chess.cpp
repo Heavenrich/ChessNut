@@ -13,7 +13,6 @@ Chess::Chess(short p, short end, short s, LiquidCrystal *l, char colLetters[8], 
   enableEndTurn(true),
   scan(s),
   enableScan(true),
-  gameOn(false),
   whosTurn(1),
   numMoves(0),
   castlingKing(0),
@@ -81,7 +80,6 @@ void Chess::newGame() {
   lcd->clear();
   lcd->print("ready to start!");
   Serial.println("ready to start!");
-  gameOn = true;
 }
 
 boolean Chess::loop() {
@@ -403,4 +401,11 @@ void Chess::outputBoard() {
   if (count == 0) {
     lcd->write("nothing...");
   }
+}
+
+boolean Chess::isValidMove(short piece, short moves[2][2]) {
+	switch (piece) {
+		default:
+			return true;
+	}
 }
