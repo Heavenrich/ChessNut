@@ -14,14 +14,19 @@ Menu::Menu(short pinUp, short pinDown, short pinSelect, short n, LiquidCrystal *
 {
 }
 
-void Menu::reset() {
-  item = 0;
+void Menu::reset(short i) {
+  item = i;
   writeLCD();
+  enableUp = false;
+  enableDown = false;
+  enableSelect = false;
 }
 
 short Menu::loop() {  
-  if (digitalRead(select)){
+  if (enableSelect && digitalRead(select)){
     return selection;
+  } else if (!digitalRead(select)) {
+    enableSelect = true;
   }
   
   if (enableUp && digitalRead(up)){
@@ -31,7 +36,7 @@ short Menu::loop() {
   } else if (!digitalRead(up)) {
     enableUp = true;
   }
-  else if (enableDown && digitalRead(down)){
+  if (enableDown && digitalRead(down)){
     item = (item + nItems - 1) % nItems;
     enableDown = false;
     writeLCD();

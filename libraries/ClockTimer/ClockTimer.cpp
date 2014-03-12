@@ -14,8 +14,16 @@ ClockTimer::ClockTimer(short pinUp, short pinDown, short pinSelect, LiquidCrysta
   }
 }
 
+void ClockTimer::reset(String p, short t) {
+  player = p;
+  time = t;
+  Menu::reset(time - 5);
+}
+
 void ClockTimer::writeLCD() {
   selection = item + 5;
   lcd->clear();
-  lcd->print(selection);
+  lcd->print("Time for " + player + ":");
+  lcd->setCursor(1, 1);
+  lcd->print(times[item]);
 }

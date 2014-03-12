@@ -48,8 +48,9 @@ int ledControl[7] = {
 #define SCANNING 3
 #define PROMOTION 4
 #define CLOCK_MENU 5
-#define CLOCK_TIMER 6
-#define END_GAME 7
+#define CLOCK_TIMER_WHITE 6
+#define CLOCK_TIMER_BLACK 7
+#define END_GAME 8
 short state;
 
 Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
@@ -114,7 +115,7 @@ void loop() {
   } else if (state == CLOCK_MENU) {
     short gameType = clockMenu.loop();
     if (gameType == ClockMenu::timer) {
-      state = CLOCK_TIMER;
+      state = CLOCK_TIMER_WHITE;
       clockTimer.reset();
     } else if (gameType == ClockMenu::noTimer) {
       state = NEW_GAME;
@@ -122,12 +123,19 @@ void loop() {
         state = SCANNING;
       }
     }
-  } else if (state = CLOCK_TIMER) {
+  } else if (state == CLOCK_TIMER_WHITE) {
     short selectedTime = clockTimer.loop();
     if (selectedTime != 0) {
-      state = NEW_GAME;
+      state = CLOCK_TIMER_BLACK;
+      clockTimer.reset("black", selectedTime);
+    }
+  } else if (state == CLOCK_TIMER_BLACK) {
+    short selectedTime = clockTimer.loop();
+    if (selectedTime != 0) {
       if (chess.newGame()) {
         state = SCANNING;
+      } else {
+        state = NEW_GAME;
       }
     }
   }

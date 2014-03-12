@@ -9,6 +9,8 @@
 class ClockMenu : public Menu {
   public:
     ClockMenu(short pinUp, short pinDown, short pinSelect, LiquidCrystal *lcd);
+    virtual void reset();
+    virtual short loop();
     
     static const short timer = 2;
     static const short noTimer = 1;
