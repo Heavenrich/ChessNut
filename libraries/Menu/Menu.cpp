@@ -1,22 +1,22 @@
 #include "Menu.h"
 
-Menu::Menu(int pinUp, int pinDown, int pinSelect, LiquidCrystal *l) :
+Menu::Menu(short pinUp, short pinDown, short pinSelect, short n, LiquidCrystal *l) :
   selection(0),
-  i(0),
-  n(2),
+  item(0),
+  nItems(n),
   up(pinUp),
   down(pinDown),
   select(pinSelect),
-  enableUp(true),
-  enableDown(true),
-  enableSelect(true),
+  enableUp(false),
+  enableDown(false),
+  enableSelect(false),
   lcd(l)
 {
 }
 
 void Menu::reset() {
-  i = 0;
-  writeLCD(0);
+  item = 0;
+  writeLCD();
 }
 
 short Menu::loop() {  
@@ -25,16 +25,16 @@ short Menu::loop() {
   }
   
   if (enableUp && digitalRead(up)){
-    i = (i + 1) % n;
+    item = (item + 1) % nItems;
     enableUp = false;
-    writeLCD(i);
+    writeLCD();
   } else if (!digitalRead(up)) {
     enableUp = true;
   }
   else if (enableDown && digitalRead(down)){
-    i = (i + n - 1) % n;
+    item = (item + nItems - 1) % nItems;
     enableDown = false;
-    writeLCD(i);
+    writeLCD();
   } else if (!digitalRead(down)) {
     enableDown = true;
   }

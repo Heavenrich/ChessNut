@@ -6,13 +6,13 @@
 
 class Menu {
   public:
-    Menu(int pinUp, int pinDown, int pinSelect, LiquidCrystal *lcd);
+    Menu(short pinUp, short pinDown, short pinSelect, short nItems, LiquidCrystal *lcd);
     void reset();
     short loop();
   protected:
     short selection;
-    short i;
-    const int n;
+    short item;
+    const short nItems;
     const short up;
     const short down;
     const short select;
@@ -21,7 +21,7 @@ class Menu {
     boolean enableSelect;
     LiquidCrystal *lcd;
     
-    virtual void writeLCD(short i) = 0;
+    virtual void writeLCD() = 0;
 };
 
 #endif
