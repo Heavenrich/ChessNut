@@ -231,6 +231,14 @@ boolean Chess::turnEnd() {
       return false;
     }
     
+	if (
+		!isValidMove(
+			whosTurn*board[moves[0][1]][moves[0][2]], 
+			{{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}})
+		) {
+		return false;
+	}
+	
     lcd->clear();
     if (whosTurn < 0) {
       lcd->print("B");
@@ -427,22 +435,64 @@ void Chess::outputBoard(boolean debug) {
 }
 
 boolean Chess::isValidMove(short piece, short moves[2][2]) {
+	rowsMoved = (moves[0][0] - moves[1][0])*whosTurn;
+	colsMoved = (moves[0][1] - moves[1][1])*whosTurn;
+
 	switch (piece) {
 		// Pawn
 		case 1:
 			// ensure same column
-			if (moves[1][2] != moves[2][2]) {
+			if (colsMoved != 0) {
 				return false;
 			}
-			rowsMoved = (moves[2][1] - moves[1][1])*whosTurn;
-			// ensure proper number of rows moved based on starting position
+			// ensure proper number of rows moved
 			if (rowsMoved < 1 || rowsMoved > 2) {
 				return false;
-			} else if (rowsMoved == 2 && moves[1][1] !=(7+whosTurn)%7)) {
+			}
+			// if two rows moved, make sure they started in the starting row
+			if (rowsMoved == 2 && moves[0][0] !=(7+whosTurn)%7)) {
 				return false;
 			}
 			
-			return true;	
+			return true;
+		// Knight
+		case 2:
+			if (abs(colsMoved) > 2 || abs(rowsMoved) > 2) {
+				return false;
+			}
+			if (
+				(abs(colsMoved) == 2 && abs(rowsMoved) != 1)
+				|| (abs(colsMoved) == 1 && abs(rowsMoved) != 2)
+			) {
+				return false;
+			}
+			
+			return true;
+		// Bishop
+		case 3:
+			if (abs(colsMoved) != abs(rowsMoved)) {
+				return true;
+			}
+			return true;
+		// Rook:
+		case 4:
+			return true;
+		// Queen;
+		case 5:
+			if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
+				return false;
+			}
+			return true;
+		// King
+		case 6:
+			if (abs(colsMoved) > 1 || abs(rowsMoved) > 1) {
+				return false;
+			}
+			
+			if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
+				return false;
+			}
+			return true;
 		default:
 			return true;
 	}
