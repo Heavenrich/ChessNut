@@ -17,8 +17,6 @@ class Chess {
     boolean startClock();
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
-	boolean isValidMove(short piece, short movesToCheck[2][2]);
-	boolean checkCollisions (short movesToCheck[2][2]);
     void setPromotedPiece(short piece);
 
     static const short loop_noUpdate = 0;
@@ -35,6 +33,9 @@ class Chess {
     void debugBoard(short array[8][8]);
     void debugScan(short array[8][8]);
     void outputBoard(boolean debug = true);
+    boolean isValidMove(short piece, short movesToCheck[2][2]);
+    boolean checkCollisions (short movesToCheck[2][2]);
+    boolean inCheck(short kingRow, short kingCol, short kingColour);
     
     Clock clock;
 
@@ -61,6 +62,13 @@ class Chess {
     short moves[MAX_MOVES][3];
     short numMoves;
     
+    short reducedMoves[MAX_MOVES][3];
+    short numReducedMoves;
+    
+    // Black is 0, White is 1; records number of pieces attacking king
+    short kingAttackers[2];
+    short kingPositions[2][2];
+	
     char cols[8];
     short castlingArrivals[2][2];
     short castlingDepartures[2][2];
