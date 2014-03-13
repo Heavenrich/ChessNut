@@ -8,6 +8,7 @@ class Clock {
   public:
     Clock(Lcd *lcd);
     void set(short whiteTime, short blackTime);
+    void writeTimes();
     void start();
     boolean loop(short whosTurn);
     

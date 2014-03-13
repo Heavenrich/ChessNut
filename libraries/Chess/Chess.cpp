@@ -38,10 +38,18 @@ boolean Chess::newGame(short whiteTime, short blackTime) {
   whosTurn = 1;
   lcd->clear();
   clock.set(whiteTime, blackTime);
+  resetFixes();
+  memcpy(board, (short[8][8]){
+      {rook, knight, bishop, queen, king, bishop, knight, rook},
+      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
+      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
+    }, sizeof(board));
   if (!initialize()) {
-    lcd->setCursor(0, 0);
-    lcd->print("set up to start!");
-    Serial.println("set up to start!");
     return false;
   } else {
     startGame();
@@ -54,7 +62,7 @@ boolean Chess::newGame(short whiteTime, short blackTime) {
 // else return false
 boolean Chess::initialize() {
   boolean initialized = false;
-  if (scanBoard(true, true)) {
+  if (scanBoard(true, false)) {
     initialized = true;
     for (short i=0; i < nRows && initialized; i ++) {
       for (short j=0; j < nRows; j++) {
@@ -73,22 +81,18 @@ boolean Chess::initialize() {
   
   if (initialized) {
     memcpy(prevScan, currScan, sizeof(prevScan));
-    memcpy(board, (short[8][8]){
-      {rook, knight, bishop, queen, king, bishop, knight, rook},
-      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
-      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
-    }, sizeof(board));
     kingPositions[0][0] = 7;
     kingPositions[0][1] = 4;
     kingPositions[1][0] = 0;
     kingPositions[1][1] = 4;
-  } 
- 
+    clock.writeTimes();
+  } else {
+    if (nFixes == 0) {
+      Serial.println("set up to start!");
+    }
+    fixBoard("set up:");
+  }
+
   return initialized;
 }
 
@@ -110,8 +114,7 @@ boolean Chess::startClock() {
     lcd->print("clock started!");
     return true;
   } else {
-    lcd->setCursor(0, 0);
-    lcd->print("set up to start!");
+    fixBoard("set up:");
     Serial.println("set up to start!");
     return false;
   }
@@ -269,16 +272,14 @@ boolean Chess::turnEnd() {
       || board[reducedMoves[fromIndex][1]][reducedMoves[fromIndex][2]]*whosTurn <= 0
       || board[reducedMoves[abs(fromIndex - 1)][1]][reducedMoves[abs(fromIndex - 1)][2]]*whosTurn > 0
     ) {
-      lcd->clearLine();
-      lcd->print("invalid move");
+      fixBoard("bad");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
     }
 	
     short validatorMoves[2][2] =  {{reducedMoves[0][1], reducedMoves[0][2]},{reducedMoves[1][1], reducedMoves[1][2]}};    
     if (!isValidMove(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]], validatorMoves)) {
-      lcd->clearLine();
-      lcd->print("piece cannot move like so");
+      fixBoard("invalid");
       Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
     }
@@ -744,4 +745,45 @@ short Chess::sign(short val) {
     return -1;
   }
   return 0;
+}
+
+void Chess::resetFixes() {
+  nFixes = 0;
+  for (short i = 0; i < 3; i++) {
+    for (short j = 0; j < 2; j++) {
+      fix[i][j] = -1;
+    }
+  }
+}
+
+void Chess::fixBoard(String message, short lcdRow) {
+  short nPositions = (16 - message.length()) / 3;
+  short nWrong = 0;
+  boolean output = false;
+  for (short i = 0; i < nRows && nWrong < nPositions; i++) {
+    for (short j = 0; j < nRows && nWrong < nPositions; j++) {
+      short activated = 1;
+      if (board[i][j] == 0) {
+        activated = 0;
+      }
+      if (activated != currScan[i][j]) {
+        if (i != fix[nWrong][0] || j != fix[nWrong][1]) {
+          fix[nWrong][0] = i;
+          fix[nWrong][1] = j;
+          output = true;
+        }
+        nWrong++;
+      }
+    }
+  }
+  if (nWrong != nFixes || output) {
+    lcd->clearLine(lcdRow);
+    if (nWrong > 0) {
+      lcd->print(message);
+      for (short i = 0; i < nWrong; i++) {
+        lcd->print(" " + String(cols[fix[i][1]]) + String(fix[i][0] + 1));
+      }
+    }
+  }
+  nFixes = nWrong;
 }

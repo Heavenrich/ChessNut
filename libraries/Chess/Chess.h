@@ -36,6 +36,8 @@ class Chess {
     boolean checkCollisions (short movesToCheck[2][2]);
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     short sign(short val);
+    void resetFixes();
+    void fixBoard(String message = "", short lcdRow = 0);
     
     Clock clock;
 
@@ -82,6 +84,9 @@ class Chess {
     short diff[8][8];
     short board[8][8];
     short checkBoard[8][8];
+    short nFixes;
+    short fix[3][2];
+    String fixMessage;
     
     Lcd *lcd;
 };

@@ -23,6 +23,11 @@ short Promotion::loop() {
     lcd->noBlink();
     lcd->clearLine();
     lcd->print("Promoted to ");
+    if (selection == 5) {
+      lcd->print("Q");
+    } else {
+      lcd->print("N");
+    }
     lcd->write(selection);
   }
   return menuLoop;

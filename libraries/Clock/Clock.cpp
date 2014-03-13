@@ -12,11 +12,17 @@ void Clock::set(short white, short black) {
     blackTime = long(black) * 60 * 1000;
     lcd->clearLine(1);
     lcd->writeClock(1, white * 60);
-    lcd->writeClock(-1, white * 60);
+    lcd->writeClock(-1, black * 60);
   } else {
     enabled = false;
   }
   started = false;
+}
+
+void Clock::writeTimes() {
+  lcd->clearLine(1);
+  lcd->writeClock(1, short(whiteTime / 1000));
+  lcd->writeClock(-1, short(blackTime / 1000));
 }
 
 void Clock::start() {
