@@ -36,6 +36,7 @@ class Chess {
     boolean isValidMove(short piece, short movesToCheck[2][2]);
     boolean checkCollisions (short movesToCheck[2][2]);
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
+    short sign(short val);
     
     Clock clock;
 
