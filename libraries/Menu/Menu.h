@@ -10,8 +10,8 @@ class Menu {
     virtual void reset(short item = 0);
     virtual short loop();
   protected:
-    short selection;
-    short item;
+    short selection; // variable that is to be returned
+    short item; // index
     const short nItems;
     const short up;
     const short down;
