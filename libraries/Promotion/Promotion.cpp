@@ -1,6 +1,6 @@
 #include "Promotion.h"
 
-Promotion::Promotion(short pinUp, short pinDown, short pinSelect, LiquidCrystal *l) :
+Promotion::Promotion(short pinUp, short pinDown, short pinSelect, Lcd *l) :
   Menu(pinUp, pinDown, pinSelect, 2, l)
 {
   symbols[0] = 5;
@@ -12,10 +12,10 @@ void Promotion::reset() {
   lcd->clear();
   lcd->setCursor(1,0);
   lcd->print("Promote to ");
-  lcd->write(byte(symbols[0]));
+  lcd->write(short(symbols[0]));
   lcd->setCursor(1,1);
   lcd->print("Promote to ");
-  lcd->write(byte(symbols[1]));
+  lcd->write(short(symbols[1]));
   Menu::reset();
 }
 

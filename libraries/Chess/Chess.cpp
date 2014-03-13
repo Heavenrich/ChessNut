@@ -1,6 +1,6 @@
 #include "Chess.h"
 
-Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], short inPins[8], short outPins[8]) :
+Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPins[8], short outPins[8]) :
   clock(l),
   pawn(1),
   knight(2),
@@ -18,14 +18,11 @@ Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], 
   numMoves(0),
   castlingKing(0),
   castlingQueen(1),
+  cols(colLetters),
+  gridInput(inPins),
+  gridOutput(outPins),
   lcd(l)
 {
-  for (short i = 0; i < nRows; i++) {
-    cols[i] = colLetters[i];
-    gridInput[i] = inPins[i];
-    gridOutput[i] = outPins[i];
-    currScan[0][i] = 0;
-  }
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
   castlingDepartures[castlingQueen][0] = 4;
@@ -57,7 +54,7 @@ boolean Chess::newGame(short whiteTime, short blackTime) {
 // else return false
 boolean Chess::initialize() {
   boolean initialized = false;
-  if (scanBoard(true, false)) {
+  if (scanBoard(true, true)) {
     initialized = true;
     for (short i=0; i < nRows && initialized; i ++) {
       for (short j=0; j < nRows; j++) {
@@ -97,7 +94,7 @@ boolean Chess::initialize() {
 
 void Chess::startGame() {
   if (clock.enabled) {
-    Lcd::clearLine(lcd);
+    lcd->clearLine();
     lcd->print("press to start!");
   } else {
     lcd->clear();
@@ -109,7 +106,7 @@ void Chess::startGame() {
 boolean Chess::startClock() {
   if (initialize()) {
     clock.start();
-    Lcd::clearLine(lcd);
+    lcd->clearLine();
     lcd->print("clock started!");
     return true;
   } else {
@@ -259,7 +256,7 @@ boolean Chess::turnEnd() {
   }
   
   if (numReducedMoves == 0) {
-    Lcd::clearLine(lcd);
+    lcd->clearLine();
     lcd->print("no moves");
     return false;
   } else if (numReducedMoves == 2) {
@@ -272,7 +269,7 @@ boolean Chess::turnEnd() {
       || board[reducedMoves[fromIndex][1]][reducedMoves[fromIndex][2]]*whosTurn <= 0
       || board[reducedMoves[abs(fromIndex - 1)][1]][reducedMoves[abs(fromIndex - 1)][2]]*whosTurn > 0
     ) {
-      Lcd::clearLine(lcd);
+      lcd->clearLine();
       lcd->print("invalid move");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
@@ -280,7 +277,7 @@ boolean Chess::turnEnd() {
 	
     short validatorMoves[2][2] =  {{reducedMoves[0][1], reducedMoves[0][2]},{reducedMoves[1][1], reducedMoves[1][2]}};    
     if (!isValidMove(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]], validatorMoves)) {
-      Lcd::clearLine(lcd);
+      lcd->clearLine();
       lcd->print("piece cannot move like so");
       Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
@@ -304,7 +301,7 @@ boolean Chess::turnEnd() {
     checkBoard[reducedMoves[0][1]][reducedMoves[0][2]] =  0;
     
     if (inCheck(kingRow, kingCol, whosTurn, checkBoard)) {
-      Lcd::clearLine(lcd);
+      lcd->clearLine();
       if (whosTurn < 0) {
         lcd->print("B");
       } else {
@@ -315,7 +312,7 @@ boolean Chess::turnEnd() {
       return false;
     }
 
-    Lcd::clearLine(lcd);
+    lcd->clearLine();
     if (whosTurn < 0) {
       lcd->print("B");
     } else {
@@ -378,7 +375,7 @@ boolean Chess::turnEnd() {
     }
     if (validCastle && (validKingSide || validQueenSide)) {
       debugScan(prevScan);
-      Lcd::clearLine(lcd);
+      lcd->clearLine();
       if (whosTurn < 0) {
         lcd->print("B");
       } else {
@@ -402,7 +399,7 @@ boolean Chess::turnEnd() {
     }
   }
   
-  Lcd::clearLine(lcd);
+  lcd->clearLine();
   lcd->print("too many moves");
 
   return false;
@@ -432,18 +429,18 @@ void Chess::reduceMoves() {
       }
     }
     if (diffSum == -1) {
-      short oppositeTakes = 0;
+      boolean oppositeTake = false;
       short oppositeTaken = 0;
       for (short i = 0; i < numReduced; i++) {
         // covers resonable cases (still edge cases) for correct taken piece
         if (reduced[i][0] == 0
             && board[reduced[i][1]][reduced[i][2]] * whosTurn < 0)
         {
-          oppositeTakes++;
+          oppositeTake = true;
           oppositeTaken = i;
         }
       }
-      if (oppositeTakes > 0) {
+      if (oppositeTake) {
         reduced[oppositeTaken][0] = 1;
       }
     }

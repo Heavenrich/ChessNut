@@ -1,6 +1,6 @@
 #include "ClockMenu.h"
 
-ClockMenu::ClockMenu(short pinUp, short pinDown, short pinSelect, LiquidCrystal *l) :
+ClockMenu::ClockMenu(short pinUp, short pinDown, short pinSelect, Lcd *l) :
   Menu(pinUp, pinDown, pinSelect, 2, l)
 {
 }

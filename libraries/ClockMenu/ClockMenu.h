@@ -2,13 +2,12 @@
 #define CLOCK_MENU_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
 #include "Menu.h"
 #include "Lcd.h"
 
 class ClockMenu : public Menu {
   public:
-    ClockMenu(short pinUp, short pinDown, short pinSelect, LiquidCrystal *lcd);
+    ClockMenu(short pinUp, short pinDown, short pinSelect, Lcd *lcd);
     virtual void reset();
     virtual short loop();
     

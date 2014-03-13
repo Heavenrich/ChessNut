@@ -4,7 +4,7 @@ Symbols::Symbols()
 {
 }
 
-void Symbols::createChars(LiquidCrystal *lcd) {
+void Symbols::createChars(Lcd *lcd) {
   byte pawn[8] = {
     B00000,
     B00000,

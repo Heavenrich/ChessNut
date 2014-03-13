@@ -1,6 +1,6 @@
 #include "ClockTimer.h"
 
-ClockTimer::ClockTimer(short pinUp, short pinDown, short pinSelect, LiquidCrystal *l) :
+ClockTimer::ClockTimer(short pinUp, short pinDown, short pinSelect, Lcd *l) :
   Menu(pinUp, pinDown, pinSelect, 45, l)
 {
 }

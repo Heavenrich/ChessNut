@@ -8,8 +8,6 @@
 #include "ClockTimer.h"
 #include "Clock.h"
 
-LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
-
 char cols[8] = {
   'A','B','C','D','E','F','G','H'
 };
@@ -20,6 +18,9 @@ short gridInput[8] = {
 short gridOutput[8] = {
   36,37,38,39,40,41,42,43
 };
+short ledControl[7] = {
+  44,45,46,47,48,49,50
+}; //A-C for row, A-C for column, input voltage
 
 short nRows = 8;
 short delayRead = 1;
@@ -38,13 +39,11 @@ short gameType;
 short whiteTime;
 short blackTime;
 
+Lcd lcd(27, 26, 25, 24, 23, 22);
+Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
 ClockTimer clockTimer(up, down, endTurn, &lcd);
-
-int ledControl[7] = {
-  44,45,46,47,48,49,50
-}; //A-C for row, A-C for column, input voltage
 
 // for controlling loop()
 #define IDLE 0
@@ -58,8 +57,6 @@ int ledControl[7] = {
 #define CLOCK_START 8
 #define END_GAME 9
 short state;
-
-Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
 
 void setup() {
   Serial.begin(9600);
