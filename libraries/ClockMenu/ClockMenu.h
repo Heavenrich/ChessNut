@@ -14,9 +14,8 @@ class ClockMenu : public Menu {
     
     static const short timer = 2;
     static const short noTimer = 1;
+
   private:
-    String statements[2];
-    
     void writeLCD();
 };
 

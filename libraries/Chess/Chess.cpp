@@ -1,6 +1,7 @@
 #include "Chess.h"
 
 Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], short inPins[8], short outPins[8]) :
+  clock(l),
   pawn(1),
   knight(2),
   bishop(3),
@@ -35,10 +36,15 @@ Chess::Chess(short d, short end, short s, LiquidCrystal *l, char colLetters[8], 
   castlingArrivals[castlingQueen][1] = 3;
 }
 
-boolean Chess::newGame() {
+boolean Chess::newGame(short whiteTime, short blackTime) {
+  numMoves = 0;
+  whosTurn = 1;
+  lcd->clear();
+  clock.set(whiteTime, blackTime);
   if (!initialize()) {
-    Lcd::clearLine(lcd);
+    lcd->setCursor(0, 0);
     lcd->print("set up to start!");
+    Serial.println("set up to start!");
     return false;
   } else {
     startGame();
@@ -51,7 +57,7 @@ boolean Chess::newGame() {
 // else return false
 boolean Chess::initialize() {
   boolean initialized = false;
-  if (scanBoard(true, true)) {
+  if (scanBoard(true, false)) {
     initialized = true;
     for (short i=0; i < nRows && initialized; i ++) {
       for (short j=0; j < nRows; j++) {
@@ -90,12 +96,43 @@ boolean Chess::initialize() {
 }
 
 void Chess::startGame() {
-  Lcd::clearLine(lcd);
-  lcd->print("ready to start!");
+  if (clock.enabled) {
+    Lcd::clearLine(lcd);
+    lcd->print("press to start!");
+  } else {
+    lcd->clear();
+    lcd->print("ready to start!");
+  }
   Serial.println("ready to start!");
 }
 
+boolean Chess::startClock() {
+  if (initialize()) {
+    clock.start();
+    Lcd::clearLine(lcd);
+    lcd->print("clock started!");
+    return true;
+  } else {
+    lcd->setCursor(0, 0);
+    lcd->print("set up to start!");
+    Serial.println("set up to start!");
+    return false;
+  }
+}
+
 short Chess::loop() {
+  if (!clock.loop(whosTurn)) {
+    lcd->clear();
+    lcd->print("Time ran out!");
+    lcd->setCursor(0, 1);
+    if (whosTurn == 1) {
+      lcd->print("Black");
+    } else {
+      lcd->print("White");
+    }
+    lcd->print(" wins.");
+    return loop_timeout;
+  }
   if (enableEndTurn && digitalRead(endTurn)) {
     enableEndTurn = false;
     if (turnEnd()) {
@@ -108,6 +145,7 @@ short Chess::loop() {
         return loop_promotion;
       } else {
         Serial.println("endTurn");
+        clock.loop(whosTurn);
         whosTurn *= -1;
         return loop_endTurn;
       }
@@ -145,6 +183,7 @@ boolean Chess::scanBoard(boolean continuous, boolean output) {
 
 void Chess::setPromotedPiece(short piece) {
   Serial.println("pawn promoted to " + String(whosTurn * piece));
+  clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   whosTurn *= -1;
 }
