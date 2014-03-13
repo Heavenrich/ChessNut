@@ -57,6 +57,9 @@ class Chess {
     short moves[MAX_MOVES][3];
     short numMoves;
     
+    short reducedMoves[MAX_MOVES][3];
+    short numReducedMoves;
+    
     // Black is 0, White is 1; records number of pieces attacking king
     short kingAttackers[2];
     short kingPositions[2][2];

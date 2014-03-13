@@ -100,8 +100,8 @@ short Chess::loop() {
     enableEndTurn = false;
     if (turnEnd()) {
       numMoves = 0;
-      if (moves[1][1] == (whosTurn + 1) * 7 / 2
-          && abs(board[moves[1][1]][moves[1][2]]) == pawn
+      if (reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
+          && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
       ) {
         Serial.println("promotion");
         return loop_promotion;
@@ -144,7 +144,7 @@ boolean Chess::scanBoard(boolean continuous, boolean output) {
 
 void Chess::setPromotedPiece(short piece) {
   Serial.println("pawn promoted to " + String(whosTurn * piece));
-  board[moves[1][1]][moves[1][2]] = whosTurn * piece;
+  board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   whosTurn *= -1;
 }
 
@@ -201,63 +201,68 @@ void Chess::detectMove() {
 
 boolean Chess::turnEnd() {
   kingAttackers[0] = 0;
-  kingAttackers[1] = 1;
+  kingAttackers[1] = 0;
   Serial.print("turn: ");
   Serial.println(whosTurn);
   Serial.print("numMoves: ");
   Serial.println(numMoves);
   reduceMoves();
   Serial.print("numMoves reduced: ");
-  Serial.println(numMoves);
-  for (short i=0; i < numMoves; i++) {
+  Serial.println(numReducedMoves);
+  for (short i=0; i < numReducedMoves; i++) {
     Serial.print("Move ");
     Serial.print(i);
     Serial.print(": ");
-    Serial.print(moves[i][0]);
-    Serial.print(cols[moves[i][2]]);
-    Serial.println(moves[i][1]+1);
+    Serial.print(reducedMoves[i][0]);
+    Serial.print(cols[reducedMoves[i][2]]);
+    Serial.println(reducedMoves[i][1]+1);
   }
   
-  if (numMoves == 0) {
+  if (numReducedMoves == 0) {
     Lcd::clearLine(lcd);
     lcd->print("no moves");
     return false;
-  } else if (numMoves == 2) {
+  } else if (numReducedMoves == 2) {
     short fromIndex = 0;
-    if (moves[0][1] == -1) {
+    if (reducedMoves[0][1] == -1) {
       fromIndex = 1;
     }
     if (
-      moves[0][0] * moves[1][0] > 0
-      || board[moves[fromIndex][1]][moves[fromIndex][2]]*whosTurn <= 0
-      || board[moves[abs(fromIndex - 1)][1]][moves[abs(fromIndex - 1)][2]]*whosTurn > 0
+      reducedMoves[0][0] * reducedMoves[1][0] > 0
+      || board[reducedMoves[fromIndex][1]][reducedMoves[fromIndex][2]]*whosTurn <= 0
+      || board[reducedMoves[abs(fromIndex - 1)][1]][reducedMoves[abs(fromIndex - 1)][2]]*whosTurn > 0
     ) {
       Lcd::clearLine(lcd);
       lcd->print("invalid move");
-      Serial.println("invalid move " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
+      Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
     }
 	
-    short validatorMoves[2][2] =  {{moves[0][1], moves[0][2]},{moves[1][1], moves[1][2]}};    
-    if (!isValidMove(whosTurn*board[moves[0][1]][moves[0][2]], validatorMoves)) {
+    short validatorMoves[2][2] =  {{reducedMoves[0][1], reducedMoves[0][2]},{reducedMoves[1][1], reducedMoves[1][2]}};    
+    if (!isValidMove(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]], validatorMoves)) {
       Lcd::clearLine(lcd);
       lcd->print("piece cannot move like so");
-      Serial.println("piece cannot move like so " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
+      Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
     }
     
-    if (whosTurn*board[moves[0][1]][moves[0][2]] == 6) {
-      if (inCheck(moves[1][1], moves[1][2], whosTurn)) {
-        Lcd::clearLine(lcd);
-        if (whosTurn < 0) {
-          lcd->print("B");
-        } else {
-          lcd->print("W");
-        }
-        lcd->print(", in check");
-        Serial.println("in check, invalid " + String(board[moves[0][1]][moves[0][2]]) + " " + String(whosTurn));
-        return false;
+    short kingRow = kingPositions[(whosTurn+1)/2][0];
+    short kingCol = kingPositions[(whosTurn+1)/2][1];
+    if (whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]] == 6) {
+      kingRow = reducedMoves[1][1];
+      kingCol = reducedMoves[1][2];
+    }
+    
+    if (inCheck(kingRow, kingCol, whosTurn)) {
+      Lcd::clearLine(lcd);
+      if (whosTurn < 0) {
+        lcd->print("B");
+      } else {
+        lcd->print("W");
       }
+      lcd->print(", in check");
+      Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      return false;
     }
 
     Lcd::clearLine(lcd);
@@ -267,54 +272,55 @@ boolean Chess::turnEnd() {
       lcd->print("W");
     }
     debugScan(prevScan);
-    lcd->write(byte(whosTurn*board[moves[0][1]][moves[0][2]]));
+    lcd->write(byte(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]]));
     lcd->print(" ");
-    lcd->print(cols[moves[0][2]]);
-    lcd->print(moves[0][1]+1);
+    lcd->print(cols[reducedMoves[0][2]]);
+    lcd->print(reducedMoves[0][1]+1);
     lcd->print(" to ");
-    lcd->print(cols[moves[1][2]]);
-    lcd->print(moves[1][1]+1);
-    board[moves[1][1]][moves[1][2]] = board[moves[0][1]][moves[0][2]];
-    board[moves[0][1]][moves[0][2]] = 0;
+    lcd->print(cols[reducedMoves[1][2]]);
+    lcd->print(reducedMoves[1][1]+1);
+    board[reducedMoves[1][1]][reducedMoves[1][2]] = board[reducedMoves[0][1]][reducedMoves[0][2]];
+    board[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
     if (inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn)) {
       lcd->print(" X");
     }
-    if (whosTurn*board[moves[0][1]][moves[0][2]] == 6) {
-      kingPositions[(whosTurn+1)/2][0] = moves[1][1];
-      kingPositions[(whosTurn+1)/2][1] = moves[1][2];
+    if (whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]] == 6) {
+      Serial.println("setting King Position");
+      kingPositions[(whosTurn+1)/2][0] = reducedMoves[1][1];
+      kingPositions[(whosTurn+1)/2][1] = reducedMoves[1][2];
     }
     return true;
   }
   // castling
-  else if (numMoves == 4) {
+  else if (numReducedMoves == 4) {
     boolean validCastle = true;
     boolean validKingSide = true;
     boolean validQueenSide = true;
     short castleColumn = (1 - whosTurn) * 7 / 2;
-    for (short i = 0; i < numMoves; i++) {
-      if (moves[i][1] != castleColumn) {
+    for (short i = 0; i < numReducedMoves; i++) {
+      if (reducedMoves[i][1] != castleColumn) {
         validCastle = false;
         Serial.println("validCastle failed");
       }
-      if (moves[i][0] < 0) {
-        if (moves[i][2] != castlingDepartures[castlingKing][0]
-            && moves[i][2] != castlingDepartures[castlingKing][1])
+      if (reducedMoves[i][0] < 0) {
+        if (reducedMoves[i][2] != castlingDepartures[castlingKing][0]
+            && reducedMoves[i][2] != castlingDepartures[castlingKing][1])
         {
           validKingSide = false;
         }
-        if (moves[i][2] != castlingDepartures[castlingQueen][0]
-            && moves[i][2] != castlingDepartures[castlingQueen][1])
+        if (reducedMoves[i][2] != castlingDepartures[castlingQueen][0]
+            && reducedMoves[i][2] != castlingDepartures[castlingQueen][1])
         {
           validQueenSide = false;
         }
       } else {
-        if (moves[i][2] != castlingArrivals[castlingKing][0]
-            && moves[i][2] != castlingArrivals[castlingKing][1])
+        if (reducedMoves[i][2] != castlingArrivals[castlingKing][0]
+            && reducedMoves[i][2] != castlingArrivals[castlingKing][1])
         {
           validKingSide = false;
         }
-        if (moves[i][2] != castlingArrivals[castlingQueen][0]
-            && moves[i][2] != castlingArrivals[castlingQueen][1])
+        if (reducedMoves[i][2] != castlingArrivals[castlingQueen][0]
+            && reducedMoves[i][2] != castlingArrivals[castlingQueen][1])
         {
           validQueenSide = false;
         }
@@ -392,13 +398,13 @@ void Chess::reduceMoves() {
       }
     }
 
-    numMoves = 0;
+    numReducedMoves = 0;
     for (short i = numReduced - 1; i >= 0; i--) {
       if (reduced[i][0] != 0) {
-        memcpy(moves[numMoves], reduced[i], sizeof(reduced[i]));
-        numMoves++;
+        memcpy(reducedMoves[numReducedMoves], reduced[i], sizeof(reduced[i]));
+        numReducedMoves++;
       }
-    }
+    }  
   }
 }
 
@@ -531,7 +537,7 @@ boolean Chess::isValidMove(short piece, short movesToCheck[2][2]) {
 		case 6:
 			if (abs(colsMoved) > 1 || abs(rowsMoved) > 1) {
 				return false;
-			} else if ((colsMoved != 0 || rowsMoved != 0) && abs(colsMoved) != abs(rowsMoved)) {
+			} else if (colsMoved != 0 && rowsMoved != 0 && abs(colsMoved) != abs(rowsMoved)) {
 				return false;
 			}
 			return true;
@@ -541,8 +547,8 @@ boolean Chess::isValidMove(short piece, short movesToCheck[2][2]) {
 }
 
 boolean Chess::checkCollisions (short movesToCheck[2][2]) {
-	short rowsMoved = (movesToCheck[1][0] - movesToCheck[0][0])*whosTurn;
-	short colsMoved = (movesToCheck[1][1] - movesToCheck[0][1])*whosTurn;
+	short rowsMoved = (movesToCheck[1][0] - movesToCheck[0][0]);
+	short colsMoved = (movesToCheck[1][1] - movesToCheck[0][1]);
 	short rowDirection = (rowsMoved > 0) - (rowsMoved < 0);
 	short colDirection = (colsMoved > 0) - (colsMoved < 0);
 	Serial.println("Cells Checked for Collision:");
@@ -575,23 +581,33 @@ boolean Chess::checkCollisions (short movesToCheck[2][2]) {
 }
 
 boolean Chess::inCheck(short kingRow, short kingCol, short kingColour) {
-	short col;
+	Serial.println("Checking for Check");
+  Serial.println("knigRow: " + String(kingRow));
+  Serial.println("kingCol: " + String(kingCol));
+  
+  short col;
 	short row;
 	// One who is in check
 	short victim = (kingColour+1)/2;
 	boolean ownPiece;
 	for (short colDir = -1; colDir < 2; colDir += 2) {
 		for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+      Serial.println("ColDir: " + String(colDir));
+      Serial.println("RowDir: " + String(rowDir));
 			col = kingCol + colDir;
 			row = kingRow + rowDir;
 			ownPiece = false;
 			// queen or bishop
-			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+      Serial.println("Queen or Bishop");
+			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {        
+        Serial.println("Row: " + String(row));
+        Serial.println("Col: " + String(col));
 				if (board[row][col] != 0) {
 					if (board[row][col] > 0 + board[row][col] < 0 == kingColour) {
 						ownPiece = true;
 					} else if (board[row][col] == -5*kingColour || board[row][col] == -3*kingColour){
-						kingAttackers[victim]++;
+						Serial.println("Attacker Found");
+            kingAttackers[victim]++;
 					}
 				}
 				col += colDir;
@@ -602,35 +618,50 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour) {
 			row = kingRow + (colDir + -1*rowDir)/2;
 			ownPiece = false;
 			// queen or rook
+      Serial.println("Queen or Rook");
 			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+        Serial.println("Row: " + String(row));
+        Serial.println("Col: " + String(col));
 				if (board[row][col] != 0) {
 					if (board[row][col] > 0 + board[row][col] < 0 == kingColour) {
 						ownPiece = true;
 					} else if (board[row][col] == -5*kingColour || board[row][col] == -4*kingColour) {
-						kingAttackers[victim]++;
+						Serial.println("Attacker Found");
+            kingAttackers[victim]++;
 					}
 				}
-				col = kingCol + (colDir + rowDir)/2;
-				row = kingRow + (colDir + -1*rowDir)/2;
+				col += (colDir + rowDir)/2;
+				row += (colDir + -1*rowDir)/2;
 			}
 			// knight
+      Serial.println("Knight");
 			row = kingRow + rowDir;
 			col = kingCol + 2*colDir;
+      Serial.println("Row: " + String(row));
+      Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -2*kingColour) {
-				kingAttackers[victim]++;
+				Serial.println("Attacker Found");
+        kingAttackers[victim]++;
 			}
 			
 			row = kingRow + 2*rowDir;
 			col = kingCol + colDir;
+      Serial.println("Row: " + String(row));
+      Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -2*kingColour) {
-				kingAttackers[victim]++;
+				Serial.println("Attacker Found");
+        kingAttackers[victim]++;
 			}
 		}		
 		// Pawn
+    Serial.println("Pawn");
 		row = kingRow + kingColour;
-		col = kingCol + colDir;
+		col = kingCol + colDir;    
+    Serial.println("Row: " + String(row));
+    Serial.println("Col: " + String(col));
 		if (row < 8 && row >= 0 && col < 8 && col != 0 && board[row][col] == -1*kingColour) {
-			kingAttackers[victim]++;
+			Serial.println("Attacker Found");
+      kingAttackers[victim]++;
 		}
 	}
 
