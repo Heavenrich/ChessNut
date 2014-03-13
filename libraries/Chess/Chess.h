@@ -32,7 +32,7 @@ class Chess {
     void outputBoard(boolean debug = true);
     boolean isValidMove(short piece, short movesToCheck[2][2]);
     boolean checkCollisions (short movesToCheck[2][2]);
-    boolean inCheck(short kingRow, short kingCol, short kingColour);
+    boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     
     const short pawn;
     const short knight;
@@ -76,6 +76,7 @@ class Chess {
     short currScan[8][8];
     short diff[8][8];
     short board[8][8];
+    short checkBoard[8][8];
     
     LiquidCrystal *lcd;
 };
