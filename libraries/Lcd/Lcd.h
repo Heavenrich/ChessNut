@@ -6,8 +6,14 @@
 
 class Lcd {
   public:
-    Lcd();
+    Lcd(LiquidCrystal *lcd);
     static void clearLine(LiquidCrystal *lcd, short row = 0);
+    void clearLine(short row = 0);
+    static void writeClock(LiquidCrystal *lcd, short whosTurn, short seconds);
+    void writeClock(short whosTurn, short seconds);
+
+  private:
+    LiquidCrystal *lcd;
 };
 
 #endif

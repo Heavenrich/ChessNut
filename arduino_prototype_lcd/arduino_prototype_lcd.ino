@@ -6,6 +6,7 @@
 #include "Lcd.h"
 #include "ClockMenu.h"
 #include "ClockTimer.h"
+#include "Clock.h"
 
 LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
 
@@ -32,6 +33,10 @@ short scan = 13;
 boolean enableNew = true;
 boolean enableLoad = true;
 boolean enableEnd = true;
+boolean enableSelect;
+short gameType;
+short whiteTime;
+short blackTime;
 
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
@@ -50,7 +55,8 @@ int ledControl[7] = {
 #define CLOCK_MENU 5
 #define CLOCK_TIMER_WHITE 6
 #define CLOCK_TIMER_BLACK 7
-#define END_GAME 8
+#define CLOCK_START 8
+#define END_GAME 9
 short state;
 
 Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
@@ -97,14 +103,21 @@ void loop() {
 
   if (state == NEW_GAME) {
     if (chess.initialize()) {
-      state = SCANNING;
       chess.startGame();
+      if (gameType == ClockMenu::timer) {
+        state = CLOCK_START;
+        enableSelect = false;
+      } else {
+        state = SCANNING;
+      }
     }
   } else if (state == SCANNING) {
     short chessLoop = chess.loop();
     if (chessLoop == Chess::loop_promotion) {
       state = PROMOTION;
       promotion.reset();
+    } else if (chessLoop == Chess::loop_timeout) {
+      state = IDLE;
     }
   } else if (state == PROMOTION) {
     short promotedPiece = promotion.loop();
@@ -113,7 +126,7 @@ void loop() {
       chess.setPromotedPiece(promotedPiece);
     }
   } else if (state == CLOCK_MENU) {
-    short gameType = clockMenu.loop();
+    gameType = clockMenu.loop();
     if (gameType == ClockMenu::timer) {
       state = CLOCK_TIMER_WHITE;
       clockTimer.reset();
@@ -124,19 +137,29 @@ void loop() {
       }
     }
   } else if (state == CLOCK_TIMER_WHITE) {
-    short selectedTime = clockTimer.loop();
-    if (selectedTime != 0) {
+    whiteTime = clockTimer.loop();
+    if (whiteTime != 0) {
       state = CLOCK_TIMER_BLACK;
-      clockTimer.reset("black", selectedTime);
+      clockTimer.reset("black", whiteTime);
     }
   } else if (state == CLOCK_TIMER_BLACK) {
-    short selectedTime = clockTimer.loop();
-    if (selectedTime != 0) {
-      if (chess.newGame()) {
+    blackTime = clockTimer.loop();
+    if (blackTime != 0) {
+      if (chess.newGame(whiteTime, blackTime)) {
         state = SCANNING;
       } else {
         state = NEW_GAME;
       }
+    }
+  } else if (state == CLOCK_START) {
+    if (enableSelect && digitalRead(endTurn)) {
+      if (chess.startClock()) {
+        state = SCANNING;
+      } else {
+        state = NEW_GAME;
+      }
+    } else if (!digitalRead(endTurn)) {
+      enableSelect = true;
     }
   }
 }

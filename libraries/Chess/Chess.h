@@ -4,15 +4,17 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include "Lcd.h"
+#include "Clock.h"
 
 #define MAX_MOVES 20
 
 class Chess {
   public:
     Chess(short delayRead, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
-    boolean newGame();
+    boolean newGame(short whiteTime = -1, short blackTime = -1);
     boolean initialize();
     void startGame();
+    boolean startClock();
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
 	boolean isValidMove(short piece, short movesToCheck[2][2]);
@@ -22,6 +24,7 @@ class Chess {
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
+    static const short loop_timeout = 3;
     
   private:
     void scanRow(short row);
@@ -33,6 +36,8 @@ class Chess {
     void debugScan(short array[8][8]);
     void outputBoard(boolean debug = true);
     
+    Clock clock;
+
     const short pawn;
     const short knight;
     const short bishop;
