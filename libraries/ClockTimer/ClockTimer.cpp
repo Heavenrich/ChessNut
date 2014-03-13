@@ -1,17 +1,8 @@
 #include "ClockTimer.h"
 
 ClockTimer::ClockTimer(short pinUp, short pinDown, short pinSelect, LiquidCrystal *l) :
-  Menu(pinUp, pinDown, pinSelect, N_CLOCK_TIMES, l)
+  Menu(pinUp, pinDown, pinSelect, 45, l)
 {
-  String suffix = ":00";
-  for (short j = 0; j < N_CLOCK_TIMES; j++) {
-    if (j < 9) {
-      times[j] = "0";
-    } else {
-      times[j] = "";
-    }
-    times[j] = times[j] + String(j + 1) + suffix;
-  }
 }
 
 void ClockTimer::reset(String p, short t) {
@@ -25,5 +16,9 @@ void ClockTimer::writeLCD() {
   lcd->clear();
   lcd->print("Time for " + player + ":");
   lcd->setCursor(1, 1);
-  lcd->print(times[item]);
+  String prefix = "";
+  if (selection < 10) {
+    prefix = "0";
+  }
+  lcd->print(prefix + String(selection) + ":00");
 }

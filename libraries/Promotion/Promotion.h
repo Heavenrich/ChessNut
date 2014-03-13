@@ -10,7 +10,6 @@ class Promotion : public Menu {
   public:
     Promotion(short pinUp, short pinDown, short pinSelect, LiquidCrystal *lcd);
   private:
-    String statements[2];
     short symbols[2];
     
     void writeLCD();

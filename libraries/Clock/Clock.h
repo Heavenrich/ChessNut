@@ -13,6 +13,7 @@ class Clock {
     boolean loop(short whosTurn);
     
     boolean enabled;
+
   private:
     long whiteTime;
     long blackTime;
