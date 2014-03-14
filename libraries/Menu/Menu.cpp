@@ -1,6 +1,6 @@
 #include "Menu.h"
 
-Menu::Menu(short pinUp, short pinDown, short pinSelect, short n, LiquidCrystal *l) :
+Menu::Menu(short pinUp, short pinDown, short pinSelect, short n, Lcd *l) :
   selection(0),
   item(0),
   nItems(n),
@@ -22,7 +22,7 @@ void Menu::reset(short i) {
   enableSelect = false;
 }
 
-short Menu::loop() {  
+short Menu::loop() {
   if (enableSelect && digitalRead(select)){
     return selection;
   } else if (!digitalRead(select)) {

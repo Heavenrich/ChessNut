@@ -1,11 +1,9 @@
 #include "Leds.h"
 
 Leds::Leds(short pins[7]) :
-  ledInput(false)
+  ledInput(false),
+  ledControl(pins)
 {
-  for (short i = 0; i < 7; i++) {
-    ledControl[i] = pins[i];
-  }
 }
 
 void Leds::setLEDPattern(short row, short column) {

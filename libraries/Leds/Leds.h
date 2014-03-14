@@ -14,7 +14,7 @@ class Leds {
     boolean flipLEDs(boolean flip = true, boolean input = true);
     void setLED(boolean isColumn, short index);
     
-    short ledControl[7];
+    short *ledControl;
     boolean ledInput;
     
 };

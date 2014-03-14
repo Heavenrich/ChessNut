@@ -2,11 +2,11 @@
 #define MENU_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
+#include "Lcd.h"
 
 class Menu {
   public:
-    Menu(short pinUp, short pinDown, short pinSelect, short nItems, LiquidCrystal *lcd);
+    Menu(short pinUp, short pinDown, short pinSelect, short nItems, Lcd *lcd);
     virtual void reset(short item = 0);
     virtual short loop();
   protected:
@@ -19,7 +19,7 @@ class Menu {
     boolean enableUp;
     boolean enableDown;
     boolean enableSelect;
-    LiquidCrystal *lcd;
+    Lcd *lcd;
     
     virtual void writeLCD() = 0;
 };

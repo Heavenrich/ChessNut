@@ -2,13 +2,12 @@
 #define CLOCK_TIMER_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
 #include "Menu.h"
 #include "Lcd.h"
 
 class ClockTimer : public Menu {
   public:
-    ClockTimer(short pinUp, short pinDown, short pinSelect, LiquidCrystal *lcd);
+    ClockTimer(short pinUp, short pinDown, short pinSelect, Lcd *lcd);
     void reset(String player = "white", short time = 3);
 
   private:

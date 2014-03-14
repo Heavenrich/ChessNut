@@ -2,7 +2,6 @@
 #define CHESS_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
 #include "Lcd.h"
 #include "Clock.h"
 
@@ -10,8 +9,8 @@
 
 class Chess {
   public:
-    Chess(short delayRead, short endTurn, short scan, LiquidCrystal *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
-    boolean newGame(short whiteTime = -1, short blackTime = -1);
+    Chess(short delayRead, short endTurn, short scan, Lcd *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    boolean newGame(short whiteTime = 0, short blackTime = 0);
     boolean initialize();
     void startGame();
     boolean startClock();
@@ -38,9 +37,12 @@ class Chess {
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     short sign(short val);
     boolean isSlide(short down, short row, short col);
+    void resetFixes();
+    void fixBoard(String message = "", short lcdRow = 0);
+    char* getPgnMove ();
     
     Clock clock;
-
+    
     const short pawn;
     const short knight;
     const short bishop;
@@ -54,6 +56,8 @@ class Chess {
     boolean enableEndTurn;
     const short scan;
     boolean enableScan;
+    
+    char* lastPgnTurn;
     
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
@@ -71,21 +75,24 @@ class Chess {
     short kingAttackers[2];
     short kingPositions[2][2];
 	
-    char cols[8];
     short castlingArrivals[2][2];
     short castlingDepartures[2][2];
     const short castlingKing;
     const short castlingQueen;
-    short gridInput[8];
-    short gridOutput[8];
+    char *cols;
+    short *gridInput;
+    short *gridOutput;
     
     short prevScan[8][8];
     short currScan[8][8];
     short diff[8][8];
     short board[8][8];
     short checkBoard[8][8];
+    short nFixes;
+    short fix[3][2];
+    String fixMessage;
     
-    LiquidCrystal *lcd;
+    Lcd *lcd;
 };
 
 #endif

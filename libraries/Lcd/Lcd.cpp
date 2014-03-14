@@ -1,39 +1,14 @@
 #include "Lcd.h"
 
-Lcd::Lcd(LiquidCrystal *l) :
-  lcd(l)
+Lcd::Lcd(short pin1, short pin2, short pin3, short pin4, short pin5, short pin6) :
+  LiquidCrystal(pin1, pin2, pin3, pin4, pin5, pin6)
 {
 }
 
-void Lcd::clearLine(LiquidCrystal *l, short row) {
-  l->setCursor(0, row);
-  l->print("                ");
-  l->setCursor(0, row);
-}
-
 void Lcd::clearLine(short row) {
-  lcd->setCursor(0, row);
-  lcd->print("                ");
-  lcd->setCursor(0, row);
-}
-
-void Lcd::writeClock(LiquidCrystal *l, short whosTurn, short seconds) {
-  String toLCD = "";
-  if (short(seconds / 60) < 10) {
-    toLCD = "0";
-  }
-  toLCD = toLCD + String(short(seconds / 60)) + ":";
-  if (seconds % 60 < 10) {
-    toLCD = toLCD + "0";
-  }
-  toLCD = toLCD + String(seconds % 60);
-
-  if (whosTurn == 1) {
-    l->setCursor(1, 1);
-  } else {
-    l->setCursor(10, 1);
-  }
-  l->print(toLCD);
+  setCursor(0, row);
+  print("                ");
+  setCursor(0, row);
 }
 
 void Lcd::writeClock(short whosTurn, short seconds) {
@@ -48,9 +23,9 @@ void Lcd::writeClock(short whosTurn, short seconds) {
   toLCD = toLCD + String(seconds % 60);
 
   if (whosTurn == 1) {
-    lcd->setCursor(1, 1);
+    setCursor(1, 1);
   } else {
-    lcd->setCursor(10, 1);
+    setCursor(10, 1);
   }
-  lcd->print(toLCD);
+  print(toLCD);
 }

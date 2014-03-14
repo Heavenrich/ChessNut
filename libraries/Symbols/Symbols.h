@@ -2,12 +2,12 @@
 #define SYMBOLS_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
+#include "Lcd.h"
 
 class Symbols {
   public:
     Symbols();
-    static void createChars(LiquidCrystal *lcd);
+    static void createChars(Lcd *lcd);
 };
 
 #endif
