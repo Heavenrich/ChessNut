@@ -218,18 +218,23 @@ void Chess::detectMove() {
     for (short j=0; j < nRows; j++) {
       if (diff[i][j] != 0) {
         if (numMoves < MAX_MOVES) {
-          moves[numMoves][0] = diff[i][j];
-          moves[numMoves][1] = i;
-          moves[numMoves][2] = j;
-          Serial.print("Move ");
-          Serial.print(numMoves);
-          Serial.print(": ");
-          Serial.print(moves[numMoves][0]);
-          Serial.print(cols[j]);
-          Serial.print(i+1);
-          Serial.print(" detected at millis() = ");
-          Serial.println(millis());
-          numMoves++;
+          if (!isSlide(diff[i][j], i, j)) {
+            moves[numMoves][0] = diff[i][j];
+            moves[numMoves][1] = i;
+            moves[numMoves][2] = j;
+            Serial.print("Move ");
+            Serial.print(numMoves);
+            Serial.print(": ");
+            Serial.print(moves[numMoves][0]);
+            Serial.print(cols[j]);
+            Serial.print(i+1);
+            Serial.print(" detected at millis() = ");
+            Serial.println(millis());
+            numMoves++;
+          } else {
+            Serial.println("Slide found, moves removed at " + String(cols[j]) + String(i));
+            Serial.println("NumMoves: " + String(numMoves));
+          }
         }
         else {
           // TOO MANY MOVES????
@@ -237,6 +242,33 @@ void Chess::detectMove() {
       }
     }
   }
+}
+
+boolean Chess::isSlide(short down, short row, short col) {
+  if (down == 1) {
+    return false;
+  }
+  boolean slideFound = false;
+  boolean move = 0;
+  while (!slideFound && move < numMoves) {
+    if (moves[move][1] == row && moves[move][2] == col && moves[move][0] == 1) {
+      slideFound = true;
+    }
+    move++;
+  }
+  
+  if (slideFound) {
+    numMoves--;
+    for (int i=move; i < numMoves; i++) {
+      moves[i][0] = moves[i+1][0];
+      moves[i][1] = moves[i+1][1];
+      moves[i][2] = moves[i+1][2];
+    }
+    
+    return true;
+  }
+  
+  return false;
 }
 
 boolean Chess::turnEnd() {
@@ -527,7 +559,7 @@ boolean Chess::isValidMove(short piece, short movesToCheck[2][2]) {
 		// Pawn
 		case 1:
       if (board[movesToCheck[1][0]][movesToCheck[1][1]] != 0) {
-        if (colsMoved != 1 || rowsMoved != 1) {
+        if (colsMoved == 0 || rowsMoved != 1) {
           return false;
         }
       } else {
@@ -688,7 +720,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
           Serial.println("checkBoard: " + String(checkBoard[row][col]));
 					if (sign(checkBoard[row][col]) == kingColour) {
 						ownPiece = true;
-					} else if (checkBoard[row][col] == -5*kingColour || checkBoard[row][col] == -4*kingColour) {
+					} else if (checkBoard[row][col] == -1*queen*kingColour || checkBoard[row][col] == -1*rook*kingColour) {
 						Serial.println("Attacker Found");
             kingAttackers[victim]++;
 					}

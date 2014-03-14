@@ -6,7 +6,7 @@
 #include "Lcd.h"
 #include "Clock.h"
 
-#define MAX_MOVES 20
+#define MAX_MOVES 50
 
 class Chess {
   public:
@@ -37,6 +37,7 @@ class Chess {
     boolean checkCollisions (short movesToCheck[2][2]);
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     short sign(short val);
+    boolean isSlide(short down, short row, short col);
     
     Clock clock;
 
