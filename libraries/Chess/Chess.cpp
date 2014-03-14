@@ -1,6 +1,7 @@
 #include "Chess.h"
 
 Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[8], short inPins[8], short outPins[8]) :
+  leds(led),
   clock(lc),
   pawn(1),
   knight(2),
@@ -22,8 +23,7 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
   cols(colLetters),
   gridInput(inPins),
   gridOutput(outPins),
-  lcd(lc),
-  leds(led)
+  lcd(lc)
 {
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
@@ -201,6 +201,96 @@ void Chess::setPromotedPiece(short piece) {
 
 void Chess::setRed(boolean on) {
   digitalWrite(redLed, on);
+}
+
+void Chess::loadGame() {
+  resetSetupBoard();
+  memcpy(board, (short[8][8]){
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {rook, knight, bishop, queen, king, bishop, knight, rook},
+      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {0, 0, 0, 0, 0, 0, 0, 0},
+      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
+      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook},
+      {0, 0, 0, 0, 0, 0, 0, 0}
+    }, sizeof(board));
+  debugBoard(board);
+}
+
+boolean Chess::setupBoard() {
+  scanBoard(true, false);
+  boolean exit = false;
+  if (!enableEndTurn && !digitalRead(endTurn)) {
+    enableEndTurn = true;
+  }
+  for (short i = 0; i < nRows; i++) {
+    for (short j = 0; j < nRows; j++) {
+      short expectedScan = 1;
+      if (board[i][j] == 0) {
+        if (currScan[i][j] == 1) {
+          if (setupPosition[0] != i || setupPosition[1] != j) {
+            setupPosition[0] = i;
+            setupPosition[1] = j;
+            lcd->clearLine();
+            lcd->setCursor(1, 0);
+            leds->setLEDPattern(j, i);
+            lcd->print("no piece");
+            lcd->setCursor(13, 0);
+            lcd->print(String(cols[j]) + String(i + 1));
+          }
+          return false;
+        }
+      } else { // expecting a piece
+        if (setupPosition[0] != i || setupPosition[1] != j) {
+          if (currScan[i][j] == 0 || (i > setPosition[0] || (i == setPosition[0] && j > setPosition[1]))) {
+            forceLoadSelect = true;
+            enableEndTurn = false;
+            setupPosition[0] = i;
+            setupPosition[1] = j;
+            lcd->clearLine();
+            lcd->setCursor(1, 0);
+            leds->setLEDPattern(j, i);
+            if (board[i][j] > 0) {
+              lcd->print("White ");
+            } else {
+              lcd->print("Black ");
+            }
+            lcd->print(String(shortForms[abs(board[i][j])]) + "(");
+            lcd->write(byte(abs(board[i][j])));
+            lcd->print(")");
+            lcd->setCursor(13, 0);
+            lcd->print(String(cols[j]) + String(i + 1));
+            return false;
+          }
+        } else {
+          if (currScan[i][j] == 0) {
+            forceLoadSelect = false;
+            return false;
+          } else if (forceLoadSelect && enableEndTurn && !digitalRead(endTurn)) {
+            return false;
+          } else if (i > setPosition[0] || (i == setPosition[0] && j > setPosition[1])) {
+            setPosition[0] = i;
+            setPosition[1] = j;
+          }
+          enableEndTurn = false;
+        }
+      }
+    }
+  }
+
+  resetSetupBoard();
+  leds->turnOff();
+  return true;
+}
+
+void Chess::resetSetupBoard() {
+  setupPosition[0] = -1;
+  setupPosition[1] = -1;
+  setupPosition[0] = -1;
+  setupPosition[1] = -1;
+  forceLoadSelect = true;
+  enableEndTurn = false;
 }
 
 void Chess::scanRow(short row) {
@@ -480,22 +570,22 @@ void Chess::reduceMoves() {
 
 void Chess::debugBoard(short array[8][8]) {
   Serial.println("------------------------");
-  Serial.println("    A B C D E F G H     ");
+  Serial.println("    A  B  C  D  E  F  G  H      ");
   for (short i = nRows - 1; i >= 0; i--) {
     Serial.print(String(i + 1) + "   ");
     for (int j = 0; j < nRows; j++) {
       if (array[i][j] > 0) {
-        Serial.print("W");
-      } else if (array[i][j] < 0) {
-        Serial.print("B");
-      } else {
         Serial.print(" ");
+      } else if (array[i][j] < 0) {
+        Serial.print("-");
+      } else {
+        Serial.print("   ");
       }
-      Serial.print(array[i][j]);
+      Serial.print(shortForms[abs(array[i][j])]);
     }
     Serial.println("   " + String(i + 1));
   }
-  Serial.println("    A B C D E F G H     ");
+  Serial.println("    A  B  C  D  E  F  G  H      ");
 }
 
 void Chess::debugScan(short array[8][8]) {
@@ -808,43 +898,4 @@ void Chess::fixBoard(String message, short lcdRow) {
     }
   }
   nFixes = nWrong;
-}
-
-boolean Chess::setupBoard() {
-  scanBoard(true, false);
-  for (short i = 0; i < nRows; i++) {
-    for (short j = 0; j < nRows; j++) {
-      short expectedScan = 1;
-      if (board[i][j] == 0) {
-        expectedScan = 0;
-      }
-      if (expectedScan != board[i][j]) {
-        if (setupPosition[0] != i || setupPosition[1] != j) {
-          setupPosition[0] = i;
-          setupPosition[1] = j;
-          lcd->clearLine();
-          leds->setLEDPattern(j, i);
-          if (expectedScan == 0) {
-            lcd->print("no piece");
-          } else {
-            if (board[i][j] > 0) {
-              lcd->print("W");
-            } else {
-              lcd->print("B");
-            }
-            lcd->write(byte(abs(board[i][j])));
-            lcd->print(" " + String(shortForms[abs(board[i][j])]));
-          }
-          lcd->setCursor(14, 0);
-          lcd->print(String(cols[j]) + String(i + 1));
-        }
-        return false;
-      }
-    }
-  }
-
-  setupPosition[0] = -1;
-  setupPosition[1] = -1;
-  leds->turnOff();
-  return true;
 }

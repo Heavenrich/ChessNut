@@ -19,13 +19,17 @@ class Chess {
     boolean scanBoard(boolean continuous = true, boolean output = true);
     void setPromotedPiece(short piece);
     void setRed(boolean on);
+    void loadGame();
+    boolean setupBoard();
+    void resetSetupBoard();
 
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
     static const short loop_timeout = 3;
     String shortForms[7];
-    
+    Leds *leds;
+
   private:
     void scanRow(short row);
     void setDiff();
@@ -41,7 +45,6 @@ class Chess {
     short sign(short val);
     void resetFixes();
     void fixBoard(String message = "", short lcdRow = 0);
-    boolean setupBoard();
     
     Clock clock;
 
@@ -93,9 +96,10 @@ class Chess {
     short fix[3][2];
     String fixMessage;
     short setupPosition[2];
+    short setPosition[2];
+    boolean forceLoadSelect;
     
     Lcd *lcd;
-    Leds *leds;
 };
 
 #endif
