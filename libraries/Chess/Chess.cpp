@@ -344,7 +344,11 @@ boolean Chess::turnEnd() {
       Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       return false;
     }
-
+    
+    boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
+    
+    setPgnMove();
+    
     lcd->clearLine();
     if (whosTurn < 0) {
       lcd->print("B");
@@ -361,7 +365,7 @@ boolean Chess::turnEnd() {
     lcd->print(reducedMoves[1][1]+1);
     board[reducedMoves[1][1]][reducedMoves[1][2]] = board[reducedMoves[0][1]][reducedMoves[0][2]];
     board[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
-    if (inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, board)) {
+    if (checked) {
       lcd->print(" X");
     }
     if (whosTurn*board[reducedMoves[1][1]][reducedMoves[1][2]] == king) {
@@ -369,7 +373,19 @@ boolean Chess::turnEnd() {
       kingPositions[(whosTurn+1)/2][0] = reducedMoves[1][1];
       kingPositions[(whosTurn+1)/2][1] = reducedMoves[1][2];
     }
+    
     return true;
+  } 
+  else if (numReducedMoves == 3) {
+    short col = reducedMoves[0][2];
+    short row = reducedMoves[0][1];
+    
+    if (col != reducedMoves[1][2] && col != reducedMoves[2][2]) {
+      return false;
+    }
+    if (row != reducedMoves[1][1] && row != reducedMoves[2][1]) {
+      return false;
+    }
   }
   // castling
   else if (numReducedMoves == 4) {
@@ -841,8 +857,74 @@ void Chess::fixBoard(String message, short lcdRow) {
   nFixes = nWrong;
 }
 
-char* Chess::getPgnMove() {
-  char* move = "";
+void Chess::setPgnMove() {
+  memcpy(lastPgnTurn, (char[6]){' ',' ',' ',' ',' ',' '}, sizeof(lastPgnTurn));
+  short chars = 0;
   
-  return move;
+  if (numReducedMoves = 2) {
+    // take occurred
+    switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
+      case 2: 
+        lastPgnTurn[chars] = 'N';
+        break;
+      case 3:
+        lastPgnTurn[chars] = 'B';
+        break;
+      case 4:
+        lastPgnTurn[chars] = 'R';
+        break;
+      case 5:
+        lastPgnTurn[chars] = 'Q';
+        break;
+      case 6:
+        lastPgnTurn[chars] = 'K';
+        break;
+      default:
+        break;
+    }
+    
+    chars++;
+    
+    if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
+      lastPgnTurn[chars] = 'x';
+      chars++;
+    }
+    
+    switch (moves[1][2]) {
+      case 0:
+        lastPgnTurn[chars] = 'a';
+        break;
+      case 1:
+        lastPgnTurn[chars] = 'b';
+        break;
+      case 2:
+        lastPgnTurn[chars] = 'c';
+        break;
+      case 3:
+        lastPgnTurn[chars] = 'd';
+        break;
+      case 4:
+        lastPgnTurn[chars] = 'e';
+        break;
+      case 5:
+        lastPgnTurn[chars] = 'f';
+        break;
+      case 6:
+        lastPgnTurn[chars] = 'g';
+        break;
+      case 7:
+        lastPgnTurn[chars] = 'h';
+        break;
+      default:
+        break;
+    }
+    chars++;
+    
+    lastPgnTurn[chars] = char(reducedMoves[1][1] + 1);
+    chars++;
+    
+    if (kingAttackers[whosTurn*-1] > 0) {
+       lastPgnTurn[chars] = '+';
+    }
+  }
 }

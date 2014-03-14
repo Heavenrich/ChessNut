@@ -39,7 +39,7 @@ class Chess {
     boolean isSlide(short down, short row, short col);
     void resetFixes();
     void fixBoard(String message = "", short lcdRow = 0);
-    char* getPgnMove ();
+    void setPgnMove();
     
     Clock clock;
     
@@ -57,7 +57,7 @@ class Chess {
     const short scan;
     boolean enableScan;
     
-    char* lastPgnTurn;
+    char lastPgnTurn[6];
     
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
@@ -87,7 +87,6 @@ class Chess {
     short currScan[8][8];
     short diff[8][8];
     short board[8][8];
-    short checkBoard[8][8];
     short nFixes;
     short fix[3][2];
     String fixMessage;
