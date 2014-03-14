@@ -1,7 +1,7 @@
 #include "Chess.h"
 
-Chess::Chess(short d, short end, short red, Lcd *l, char colLetters[8], short inPins[8], short outPins[8]) :
-  clock(l),
+Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[8], short inPins[8], short outPins[8]) :
+  clock(lc),
   pawn(1),
   knight(2),
   bishop(3),
@@ -22,7 +22,8 @@ Chess::Chess(short d, short end, short red, Lcd *l, char colLetters[8], short in
   cols(colLetters),
   gridInput(inPins),
   gridOutput(outPins),
-  lcd(l)
+  lcd(lc),
+  leds(led)
 {
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
@@ -32,6 +33,12 @@ Chess::Chess(short d, short end, short red, Lcd *l, char colLetters[8], short in
   castlingArrivals[castlingKing][1] = 5;
   castlingArrivals[castlingQueen][0] = 2;
   castlingArrivals[castlingQueen][1] = 3;
+  shortForms[pawn] = "P";
+  shortForms[knight] = "N";
+  shortForms[bishop] = "B";
+  shortForms[rook] = "R";
+  shortForms[queen] = "Q";
+  shortForms[king] = "K";
 }
 
 boolean Chess::newGame(short whiteTime, short blackTime) {
@@ -526,7 +533,7 @@ void Chess::outputBoard(boolean debug) {
     }
   }
   if (count == 0) {
-    lcd->write("nothing...");
+    lcd->print("nothing...");
   }
 }
 
@@ -801,4 +808,43 @@ void Chess::fixBoard(String message, short lcdRow) {
     }
   }
   nFixes = nWrong;
+}
+
+boolean Chess::setupBoard() {
+  scanBoard(true, false);
+  for (short i = 0; i < nRows; i++) {
+    for (short j = 0; j < nRows; j++) {
+      short expectedScan = 1;
+      if (board[i][j] == 0) {
+        expectedScan = 0;
+      }
+      if (expectedScan != board[i][j]) {
+        if (setupPosition[0] != i || setupPosition[1] != j) {
+          setupPosition[0] = i;
+          setupPosition[1] = j;
+          lcd->clearLine();
+          leds->setLEDPattern(j, i);
+          if (expectedScan == 0) {
+            lcd->print("no piece");
+          } else {
+            if (board[i][j] > 0) {
+              lcd->print("W");
+            } else {
+              lcd->print("B");
+            }
+            lcd->write(byte(abs(board[i][j])));
+            lcd->print(" " + String(shortForms[abs(board[i][j])]));
+          }
+          lcd->setCursor(14, 0);
+          lcd->print(String(cols[j]) + String(i + 1));
+        }
+        return false;
+      }
+    }
+  }
+
+  setupPosition[0] = -1;
+  setupPosition[1] = -1;
+  leds->turnOff();
+  return true;
 }

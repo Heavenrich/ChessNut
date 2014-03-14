@@ -3,13 +3,14 @@
 
 #include <Arduino.h>
 #include "Lcd.h"
+#include "Leds.h"
 #include "Clock.h"
 
 #define MAX_MOVES 20
 
 class Chess {
   public:
-    Chess(short delayRead, short endTurn, short redLed, Lcd *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    Chess(short delayRead, short endTurn, short redLed, Lcd *lcd, Leds *leds, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean newGame(short whiteTime = 0, short blackTime = 0);
     boolean initialize();
     void startGame();
@@ -23,6 +24,7 @@ class Chess {
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
     static const short loop_timeout = 3;
+    String shortForms[7];
     
   private:
     void scanRow(short row);
@@ -39,6 +41,7 @@ class Chess {
     short sign(short val);
     void resetFixes();
     void fixBoard(String message = "", short lcdRow = 0);
+    boolean setupBoard();
     
     Clock clock;
 
@@ -77,9 +80,9 @@ class Chess {
     short castlingDepartures[2][2];
     const short castlingKing;
     const short castlingQueen;
-    char *cols;
-    short *gridInput;
-    short *gridOutput;
+    const char *cols;
+    const short *gridInput;
+    const short *gridOutput;
     
     short prevScan[8][8];
     short currScan[8][8];
@@ -89,8 +92,10 @@ class Chess {
     short nFixes;
     short fix[3][2];
     String fixMessage;
+    short setupPosition[2];
     
     Lcd *lcd;
+    Leds *leds;
 };
 
 #endif

@@ -6,7 +6,7 @@ Leds::Leds(short pins[7]) :
 {
 }
 
-void Leds::setLEDPattern(int row, int column) {
+void Leds::setLEDPattern(short row, short column) {
   flipLEDs(false, false);
   setLED(false, row);
   setLED(true, column);
@@ -22,8 +22,12 @@ void Leds::lightWhosTurn(short whosTurn) {
   }
 }
 
-void Leds::setLED(boolean isColumn, int index) {
-  int i = 0;
+void Leds::turnOff() {
+  flipLEDs(false, false);
+}
+
+void Leds::setLED(boolean isColumn, short index) {
+  short i = 0;
   if (isColumn) {
     i = 3;
   }
@@ -33,7 +37,7 @@ void Leds::setLED(boolean isColumn, int index) {
   digitalWrite(ledControl[2+i], (byte(index) >> 2) & byte(1));
 }
 
-boolean flipLEDs(boolean flip, boolean input) {
+boolean Leds::flipLEDs(boolean flip, boolean input) {
   if (flip) {
     ledInput = !ledInput;
   } else {

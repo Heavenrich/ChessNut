@@ -4,6 +4,7 @@
 #include "Symbols.h"
 #include "Menu.h"
 #include "Lcd.h"
+#include "Leds.h"
 #include "ClockMenu.h"
 #include "ClockTimer.h"
 #include "Clock.h"
@@ -39,7 +40,8 @@ short whiteTime;
 short blackTime;
 
 Lcd lcd(27, 26, 25, 24, 23, 22);
-Chess chess(delayRead, endTurn, redLed, &lcd, cols, gridInput, gridOutput);
+Leds leds(ledControl);
+Chess chess(delayRead, endTurn, redLed, &lcd, &leds, cols, gridInput, gridOutput);
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
 ClockTimer clockTimer(up, down, endTurn, &lcd);
