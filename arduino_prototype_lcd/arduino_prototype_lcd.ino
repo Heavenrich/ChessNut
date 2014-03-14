@@ -29,8 +29,7 @@ short up = 9;
 short down = 10;
 short newGame = 11;
 short loadGame = 12;
-short endGame = 13;
-short scan = 13;
+short redLed = 13;
 boolean enableNew = true;
 boolean enableLoad = true;
 boolean enableEnd = true;
@@ -40,7 +39,7 @@ short whiteTime;
 short blackTime;
 
 Lcd lcd(27, 26, 25, 24, 23, 22);
-Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
+Chess chess(delayRead, endTurn, redLed, &lcd, cols, gridInput, gridOutput);
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
 ClockTimer clockTimer(up, down, endTurn, &lcd);
@@ -70,7 +69,8 @@ void setup() {
   pinMode(down, INPUT);
   pinMode(newGame, INPUT);
   pinMode(loadGame, INPUT);
-  pinMode(endGame, INPUT);
+  pinMode(redLed, OUTPUT);
+  digitalWrite(redLed, LOW);
   Symbols::createChars(&lcd);
   lcd.begin(16, 2);
   state = IDLE;
@@ -84,6 +84,7 @@ void setup() {
 
 void loop() {
   if (enableNew && digitalRead(newGame)) {
+    chess.setRed(false);
     enableNew = false;
     state = CLOCK_MENU;
     clockMenu.reset();
@@ -92,6 +93,7 @@ void loop() {
   }
 
   if (enableLoad && digitalRead(loadGame)) {
+    chess.setRed(false);
     enableLoad = false;
     //state = LOAD_GAME;
   } else if (!digitalRead(newGame)) {

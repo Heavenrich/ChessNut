@@ -1,6 +1,6 @@
 #include "Chess.h"
 
-Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPins[8], short outPins[8]) :
+Chess::Chess(short d, short end, short red, Lcd *l, char colLetters[8], short inPins[8], short outPins[8]) :
   clock(l),
   pawn(1),
   knight(2),
@@ -12,8 +12,9 @@ Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPi
   nRows(8),
   endTurn(end),
   enableEndTurn(true),
-  scan(s),
+  scan(d),
   enableScan(true),
+  redLed(red),
   whosTurn(1),
   numMoves(0),
   castlingKing(0),
@@ -80,6 +81,7 @@ boolean Chess::initialize() {
   }
   
   if (initialized) {
+    setRed(false);
     memcpy(prevScan, currScan, sizeof(prevScan));
     kingPositions[0][0] = 7;
     kingPositions[0][1] = 4;
@@ -87,6 +89,7 @@ boolean Chess::initialize() {
     kingPositions[1][1] = 4;
     clock.writeTimes();
   } else {
+    setRed(true);
     if (nFixes == 0) {
       Serial.println("set up to start!");
     }
@@ -122,6 +125,7 @@ boolean Chess::startClock() {
 
 short Chess::loop() {
   if (!clock.loop(whosTurn)) {
+    setRed(true);
     lcd->clear();
     lcd->print("Time ran out!");
     lcd->setCursor(0, 1);
@@ -186,6 +190,10 @@ void Chess::setPromotedPiece(short piece) {
   clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   whosTurn *= -1;
+}
+
+void Chess::setRed(boolean on) {
+  digitalWrite(redLed, on);
 }
 
 void Chess::scanRow(short row) {
@@ -261,6 +269,7 @@ boolean Chess::turnEnd() {
   if (numReducedMoves == 0) {
     lcd->clearLine();
     lcd->print("no moves");
+    setRed(false);
     return false;
   } else if (numReducedMoves == 2) {
     short fromIndex = 0;
@@ -274,6 +283,7 @@ boolean Chess::turnEnd() {
     ) {
       fixBoard("bad");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
 	
@@ -281,6 +291,7 @@ boolean Chess::turnEnd() {
     if (!isValidMove(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]], validatorMoves)) {
       fixBoard("invalid");
       Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
     
@@ -310,6 +321,7 @@ boolean Chess::turnEnd() {
       }
       lcd->print(", in check");
       Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
 
@@ -337,6 +349,7 @@ boolean Chess::turnEnd() {
       kingPositions[(whosTurn+1)/2][0] = reducedMoves[1][1];
       kingPositions[(whosTurn+1)/2][1] = reducedMoves[1][2];
     }
+    setRed(false);
     return true;
   }
   // castling
@@ -396,6 +409,7 @@ boolean Chess::turnEnd() {
         board[castleColumn][castlingDepartures[castlingKing][1]] = 0;
       }
       
+      setRed(false);
       return true;
     }
   }
@@ -403,6 +417,7 @@ boolean Chess::turnEnd() {
   lcd->clearLine();
   lcd->print("too many moves");
 
+  setRed(true);
   return false;
 }
 

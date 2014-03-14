@@ -9,7 +9,7 @@
 
 class Chess {
   public:
-    Chess(short delayRead, short endTurn, short scan, Lcd *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    Chess(short delayRead, short endTurn, short redLed, Lcd *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean newGame(short whiteTime = 0, short blackTime = 0);
     boolean initialize();
     void startGame();
@@ -17,6 +17,7 @@ class Chess {
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
     void setPromotedPiece(short piece);
+    void setRed(boolean on);
 
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
@@ -54,6 +55,7 @@ class Chess {
     boolean enableEndTurn;
     const short scan;
     boolean enableScan;
+    short redLed;
     
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
