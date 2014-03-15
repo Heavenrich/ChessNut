@@ -1044,24 +1044,6 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
       kingAttackers[victim]++;
 		}
 	}
-  
-  boolean inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]) {
-    short row;
-    short col;
-    for (short colDir = -1; colDir < 2; colDir += 2) {
-      for (short rowDir = -1; rowDir < 2; rowDir += 2) {
-        col = kingCol + (colDir + rowDir)/2;
-        row = kingRow + (colDir + -1*rowDir)/2;
-        if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == 0) {
-          checkBoard[kingRow][KingCol] = 0;
-          checkBoard[row][col] = king*kingColour;
-          if (!inCheck(row,col, kingColour, checkBoard));
-        }
-      }
-    }
-    
-    return true;
-  }
 
 	if (kingAttackers[victim] > 0) {
 		return true;
@@ -1069,6 +1051,25 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 	
 	return false;
 }
+
+
+  // boolean inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]) {
+    // short row;
+    // short col;
+    // for (short colDir = -1; colDir < 2; colDir += 2) {
+      // for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+        // col = kingCol + (colDir + rowDir)/2;
+        // row = kingRow + (colDir + -1*rowDir)/2;
+        // if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == 0) {
+          // checkBoard[kingRow][KingCol] = 0;
+          // checkBoard[row][col] = king*kingColour;
+          // if (!inCheck(row,col, kingColour, checkBoard));
+        // }
+      // }
+    // }
+    
+    // return true;
+  // }
 
 short Chess::sign(short val) {
   if (val > 0) {

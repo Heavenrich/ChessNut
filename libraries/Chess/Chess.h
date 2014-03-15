@@ -25,7 +25,9 @@ class Chess {
     void resetSetupBoard(); // should be called once before physically setting the board
     boolean moveAttacker(short attackRow, short attackCol, short piece, short fromRow = -1, short fromCol = -1);
     void debugCurrentBoard();
+    boolean moveCastle(boolean kingSide);
     void initializeBoard();
+    boolean movePromotion(short attackCol, short piece);
 
 
     static const short pawn = 1;
@@ -62,8 +64,6 @@ class Chess {
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove(short edgeCase = pgn_normal);
-    boolean moveCastle(boolean kingSide);
-    boolean movePromotion(short attackCol, short piece);
     boolean moveEnpassant(short attackRow, short attackCol);
     
     Clock clock;

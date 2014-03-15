@@ -59,7 +59,7 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
-        else if (a[0] == "O" ) {
+        else if (a[0] == 'O' ) {
             boardList[boardMoves][0]=-1;
             boardList[boardMoves][1]=-1;
             boardList[boardMoves][2]=6*b;
@@ -87,7 +87,7 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
-        else if (a[0] == "O" ) {
+        else if (a[0] == 'O' ) {
             boardList[boardMoves][0]=0;
             boardList[boardMoves][1]=0;
             boardList[boardMoves][2]=1*b;
@@ -175,7 +175,7 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
-        else if (a[0] == "O" ) {
+        else if (a[0] == 'O' ) {
             boardList[boardMoves][0]=-2;
             boardList[boardMoves][1]=-2;
             boardList[boardMoves][2]=6*b;
@@ -198,7 +198,7 @@ void PGN::stringParser(String a, short b) {
         }
     }
     else if (a.length() == 6) {
-        if (a[0] == "O" ) {
+        if (a[0] == 'O' ) {
             boardList[boardMoves][0]=-2;
             boardList[boardMoves][1]=-2;
             boardList[boardMoves][2]=6*b;

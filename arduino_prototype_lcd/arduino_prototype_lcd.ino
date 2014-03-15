@@ -176,14 +176,14 @@ void loop() {
     chess.initializeBoard();
     chess.debugCurrentBoard();
     for (short i=0; i < pgn.movesCount; i++) {
-      if (pgn.boardList[i][3] == -2 && pgn.boarList[i][4] == -2) {
+      if (pgn.boardList[i][3] == -2 && pgn.boardList[i][4] == -2) {
         chess.movePromotion(pgn.boardList[i][1], pgn.boardList[i][2]);
-      } else if (pgn.boardList[i][0] == -1 && pgn.boarList[i][1] == -1) {
-        chess.whosturn = -2*(i%2)+1;
+      } else if (pgn.boardList[i][0] == -1 && pgn.boardList[i][1] == -1) {
+        chess.whosTurn = -2*(i%2)+1;
         chess.moveCastle(true);
       } else if (pgn.boardList[i][0] == -2 && pgn.boardList[i][1] == -2) {
-        chess.whosturn = -2*(i%2)+1;
-        chess.moveCastle(false;);
+        chess.whosTurn = -2*(i%2)+1;
+        chess.moveCastle(false);
       }
       chess.moveAttacker(pgn.boardList[i][0],pgn.boardList[i][1], pgn.boardList[i][2], pgn.boardList[i][3], pgn.boardList[i][4]);
       chess.debugCurrentBoard();
