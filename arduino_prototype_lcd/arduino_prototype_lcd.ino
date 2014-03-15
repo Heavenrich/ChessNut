@@ -1,3 +1,4 @@
+#include <SD.h>
 #include <LiquidCrystal.h>
 #include "Chess.h"
 #include "Promotion.h"
@@ -86,23 +87,52 @@ void setup() {
 
 void loop() {
   if (enableNew && digitalRead(newGame)) {
+    chess.leds->turnOff();
     chess.setRed(false);
     enableNew = false;
     state = CLOCK_MENU;
     clockMenu.reset();
+    if (!SD.exists("boot.bin")){
+      if (!SD.begin()) {
+        lcd.print("No SD card inserted!");
+        state = IDLE;
+      }
+    }
   } else if (!digitalRead(newGame)) {
     enableNew = true;
   }
 
   if (enableLoad && digitalRead(loadGame)) {
     chess.setRed(false);
+    chess.leds->turnOff();
     enableLoad = false;
-    //state = LOAD_GAME;
+    if (!SD.exists("boot.bin")){
+      if (!SD.begin()) {
+        lcd.print("No SD card inserted!");
+      }
+    }
+
+    chess.resetSetupBoard();
+    state = LOAD_GAME;
+    chess.loadGame();
   } else if (!digitalRead(newGame)) {
     enableLoad = true;
   }
 
   if (state == NEW_GAME) {
+    short fileNum = 0;
+    char fileName[5];
+    char ret[10];
+    strcpy(ret, itoa(fileNum, fileName, 10));
+    strcat(ret, ".pgn");
+    while (SD.exists(ret)) {
+      fileNum++;
+      strcpy(ret, itoa(fileNum, fileName, 10));
+      strcat(ret, ".pgn");
+    }
+    
+    memcpy(chess.fileName, ret, sizeof(chess.fileName));
+    
     if (chess.initialize()) {
       chess.startGame();
       if (gameType == ClockMenu::timer) {
@@ -111,6 +141,10 @@ void loop() {
       } else {
         state = SCANNING;
       }
+    }
+  } else if (state == LOAD_GAME) {
+    if (chess.setupBoard()) {
+      state = SCANNING;
     }
   } else if (state == SCANNING) {
     short chessLoop = chess.loop();
@@ -133,6 +167,7 @@ void loop() {
       clockTimer.reset();
     } else if (gameType == ClockMenu::noTimer) {
       state = NEW_GAME;
+      
       if (chess.newGame()) {
         state = SCANNING;
       }

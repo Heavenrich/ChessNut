@@ -2,11 +2,12 @@
 #define CHESS_H
 
 #include <Arduino.h>
+#include <SD.h>
 #include "Lcd.h"
 #include "Leds.h"
 #include "Clock.h"
 
-#define MAX_MOVES 20
+#define MAX_MOVES 50
 
 class Chess {
   public:
@@ -19,12 +20,17 @@ class Chess {
     boolean scanBoard(boolean continuous = true, boolean output = true);
     void setPromotedPiece(short piece);
     void setRed(boolean on);
+    void loadGame();
+    boolean setupBoard();
+    void resetSetupBoard();
 
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
     static const short loop_timeout = 3;
     String shortForms[7];
+    char fileName[10];
+    Leds *leds;
     
   private:
     void scanRow(short row);
@@ -39,12 +45,14 @@ class Chess {
     boolean checkCollisions (short movesToCheck[2][2]);
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     short sign(short val);
+    boolean isSlide(short down, short row, short col);
     void resetFixes();
     void fixBoard(String message = "", short lcdRow = 0);
-    boolean setupBoard();
+    void setPgnMove();
+    void moveAttacker(short attackRow, short attackCol, short piece);
     
     Clock clock;
-
+    
     const short pawn;
     const short knight;
     const short bishop;
@@ -60,8 +68,11 @@ class Chess {
     boolean enableScan;
     short redLed;
     
+    char lastPgnTurn[6];
+    
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
+    short numTurns;
     
     // list of moves made this turn 
     // moves[0] = {-1, 2, 4} means the first move of the turn was a piece being removed from D2
@@ -83,19 +94,20 @@ class Chess {
     const char *cols;
     const short *gridInput;
     const short *gridOutput;
+    const char* file;
     
     short prevScan[8][8];
     short currScan[8][8];
     short diff[8][8];
     short board[8][8];
-    short checkBoard[8][8];
     short nFixes;
     short fix[3][2];
     String fixMessage;
     short setupPosition[2];
+    short setPosition[2];
+    boolean forceLoadSelect;
     
     Lcd *lcd;
-    Leds *leds;
 };
 
 #endif

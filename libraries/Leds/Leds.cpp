@@ -31,10 +31,9 @@ void Leds::setLED(boolean isColumn, short index) {
   if (isColumn) {
     i = 3;
   }
-  
-  digitalWrite(ledControl[0+i], byte(index) & byte(1));
-  digitalWrite(ledControl[1+i], (byte(index) >> 1) & byte(1));
-  digitalWrite(ledControl[2+i], (byte(index) >> 2) & byte(1));
+  digitalWrite(ledControl[0+i], byte(7 - index) & byte(1));
+  digitalWrite(ledControl[1+i], (byte(7 - index) >> 1) & byte(1));
+  digitalWrite(ledControl[2+i], (byte(7 - index) >> 2) & byte(1));
 }
 
 boolean Leds::flipLEDs(boolean flip, boolean input) {

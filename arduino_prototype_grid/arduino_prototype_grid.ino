@@ -1,9 +1,11 @@
+#include <Lcd.h>
+
 #include <LiquidCrystal.h>
 #include "Chess.h"
 #include "Promotion.h"
 #include "Symbols.h"
 
-LiquidCrystal lcd(27, 26, 25, 24, 23, 22);
+Lcd lcd(27, 26, 25, 24, 23, 22);
 
 char cols[8] = {
   'A','B','C','D','E','F','G','H'

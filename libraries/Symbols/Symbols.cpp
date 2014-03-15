@@ -19,7 +19,7 @@ void Symbols::createChars(Lcd *lcd) {
   byte knight[8] = {
     B00000,
     B01000,
-    B01110,
+    B01111,
     B01111,
     B01111,
     B01100,
@@ -50,7 +50,7 @@ void Symbols::createChars(Lcd *lcd) {
   };
 
   byte queen[8] = {
-    B00100,
+    B01110,
     B01110,
     B01110,
     B01110,
