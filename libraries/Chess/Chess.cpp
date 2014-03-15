@@ -42,6 +42,7 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
   shortForms[king] = "K";
 }
 
+// set board, is initialized? -> startGame()
 boolean Chess::newGame(short whiteTime, short blackTime) {
   numMoves = 0;
   whosTurn = 1;
@@ -107,6 +108,7 @@ boolean Chess::initialize() {
   return initialized;
 }
 
+// let game begin, or if clock let them press select to start the game
 void Chess::startGame() {
   if (clock.enabled) {
     lcd->clearLine();
@@ -118,6 +120,7 @@ void Chess::startGame() {
   Serial.println("ready to start!");
 }
 
+// if board is still initialized start the game
 boolean Chess::startClock() {
   if (initialize()) {
     clock.start();
@@ -131,6 +134,7 @@ boolean Chess::startClock() {
   }
 }
 
+// main loop, return a loop_ variable if endTurn, promotion, or clock timeout
 short Chess::loop() {
   if (!clock.loop(whosTurn)) {
     setRed(true);
@@ -200,6 +204,7 @@ void Chess::setPromotedPiece(short piece) {
   whosTurn *= -1;
 }
 
+// set the red led
 void Chess::setRed(boolean on) {
   digitalWrite(redLed, on);
 }
@@ -268,7 +273,7 @@ boolean Chess::setupBoard() {
           if (currScan[i][j] == 0) {
             forceLoadSelect = false;
             return false;
-          } else if (forceLoadSelect && enableEndTurn && !digitalRead(endTurn)) {
+          } else if (forceLoadSelect && (!enableEndTurn || !digitalRead(endTurn))) {
             return false;
           } else if (i > setPosition[0] || (i == setPosition[0] && j > setPosition[1])) {
             setPosition[0] = i;
@@ -1040,6 +1045,7 @@ void Chess::resetFixes() {
   }
 }
 
+// output squares to lcd that are different than what's expected based on board
 void Chess::fixBoard(String message, short lcdRow) {
   short nPositions = (16 - message.length()) / 3;
   short nWrong = 0;
