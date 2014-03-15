@@ -157,6 +157,8 @@ void PGN::stringParser(String a, short b) {
         boardList[boardMoves][1]=a[1]-97;
         pgnParserPieces(a[4],b);
     }
+    boardList[boardMoves][3] = -1;
+    boardList[boardMoves][4] = -1;
     boardMoves++;
 }
 

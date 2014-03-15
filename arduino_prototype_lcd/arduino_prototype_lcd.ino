@@ -59,6 +59,7 @@ ClockTimer clockTimer(up, down, endTurn, &lcd);
 #define CLOCK_TIMER_BLACK 7
 #define CLOCK_START 8
 #define END_GAME 9
+#define SET_UP 10
 short state;
 
 void setup() {
@@ -129,7 +130,6 @@ void loop() {
   } else if (!digitalRead(newGame)) {
     enableLoad = true;
   }
-
   if (state == NEW_GAME) {
     short fileNum = 0;
     char fileName[5];
@@ -156,6 +156,37 @@ void loop() {
       }
     }
   } else if (state == LOAD_GAME) {
+    short fileNum = 0;
+    char fileName[5];
+    char ret[10];
+    strcpy(ret, itoa(fileNum, fileName, 10));
+    strcat(ret, ".pgn");
+    while (SD.exists(ret)) {
+      fileNum++;
+      strcpy(ret, itoa(fileNum, fileName, 10));
+      strcat(ret, ".pgn");
+    }
+    
+    fileNum--;
+    strcpy(ret, itoa(fileNum, fileName, 10));
+    strcat(ret, ".pgn");
+    memcpy(chess.fileName, ret, sizeof(chess.fileName));
+    Serial.println(ret);
+    PGN pgn(ret);
+    chess.initializeBoard();
+    chess.debugCurrentBoard();
+    for (short i=0; i < pgn.movesCount; i++) {
+      chess.moveAttacker(pgn.boardList[i][0],pgn.boardList[i][1], pgn.boardList[i][2], pgn.boardList[i][3], pgn.boardList[i][4]);
+      chess.debugCurrentBoard();
+    }
+    
+    chess.numTurns = pgn.movesCount/2;
+    chess.whosTurn = -2*(pgn.movesCount%2)+1;
+    
+    Serial.println("Done recreating pgn");
+    
+    state = SET_UP;
+  } else if (state == SET_UP) {
     if (chess.setupBoard()) {
       state = SCANNING;
     }

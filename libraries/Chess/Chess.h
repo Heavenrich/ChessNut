@@ -23,7 +23,10 @@ class Chess {
     void loadGame();
     boolean setupBoard(); // loop for physically setting up board, return true if done
     void resetSetupBoard(); // should be called once before physically setting the board
-
+    boolean moveAttacker(short attackRow, short attackCol, short piece, short fromRow = -1, short fromCol = -1);
+    void debugCurrentBoard();
+    void initializeBoard();
+    
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
@@ -31,6 +34,8 @@ class Chess {
     String shortForms[7];
     char fileName[10];
     Leds *leds;
+    short numTurns;
+    short whosTurn;
     
   private:
     void scanRow(short row);
@@ -49,7 +54,6 @@ class Chess {
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove();
-    boolean moveAttacker(short attackRow, short attackCol, short piece, short fromRow = -1, short fromCol = -1);
     boolean moveCastle(boolean kingSide);
     boolean movePromotion(short attackCol, short piece);
     boolean moveEnpassant(short attackRow, short attackCol);
@@ -74,8 +78,6 @@ class Chess {
     char lastPgnTurn[6];
     
     // if 1, then white's turn, if -1 then black's turn
-    short whosTurn;
-    short numTurns;
     
     // list of moves made this turn 
     // moves[0] = {-1, 2, 4} means the first move of the turn was a piece being removed from D2

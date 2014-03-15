@@ -49,22 +49,26 @@ boolean Chess::newGame(short whiteTime, short blackTime) {
   lcd->clear();
   clock.set(whiteTime, blackTime);
   resetFixes();
-  memcpy(board, (short[8][8]){
-      {rook, knight, bishop, queen, king, bishop, knight, rook},
-      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
-      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
-    }, sizeof(board));
+  initializeBoard();
   if (!initialize()) {
     return false;
   } else {
     startGame();
     return true;
   }
+}
+
+void Chess::initializeBoard() {
+  memcpy(board, (short[8][8]){
+    {rook, knight, bishop, queen, king, bishop, knight, rook},
+    {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
+    {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook}
+  }, sizeof(board));
 }
 
 // determine if the board has been set up in the standard starting position
@@ -214,17 +218,17 @@ void Chess::setRed(boolean on) {
 }
 
 void Chess::loadGame() {
-  resetSetupBoard();
-  memcpy(board, (short[8][8]){
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {rook, knight, bishop, queen, king, bishop, knight, rook},
-      {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {0, 0, 0, 0, 0, 0, 0, 0},
-      {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
-      {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook},
-      {0, 0, 0, 0, 0, 0, 0, 0}
-    }, sizeof(board));
+  //resetSetupBoard();
+  //memcpy(board, (short[8][8]){
+  //    {0, 0, 0, 0, 0, 0, 0, 0},
+  //    {rook, knight, bishop, queen, king, bishop, knight, rook},
+  //    {pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn},
+  //    {0, 0, 0, 0, 0, 0, 0, 0},
+  //    {0, 0, 0, 0, 0, 0, 0, 0},
+  //    {-1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn, -1*pawn},
+  //    {-1*rook, -1*knight, -1*bishop, -1*queen, -1*king, -1*bishop, -1*knight, -1*rook},
+  //    {0, 0, 0, 0, 0, 0, 0, 0}
+  //  }, sizeof(board));
   debugBoard(board);
 }
 
@@ -291,6 +295,7 @@ boolean Chess::setupBoard() {
 
   resetSetupBoard();
   leds->turnOff();
+  memcpy(prevScan, currScan, sizeof(prevScan));
   return true;
 }
 
@@ -748,6 +753,26 @@ void Chess::debugBoard(short array[8][8]) {
   Serial.println("    A  B  C  D  E  F  G  H      ");
 }
 
+void Chess::debugCurrentBoard() {
+  Serial.println("------------------------");
+  Serial.println("    A  B  C  D  E  F  G  H      ");
+  for (short i = nRows - 1; i >= 0; i--) {
+    Serial.print(String(i + 1) + "   ");
+    for (int j = 0; j < nRows; j++) {
+      if (board[i][j] > 0) {
+        Serial.print(" ");
+      } else if (board[i][j] < 0) {
+        Serial.print("-");
+      } else {
+        Serial.print("   ");
+      }
+      Serial.print(shortForms[abs(board[i][j])]);
+    }
+    Serial.println("   " + String(i + 1));
+  }
+  Serial.println("    A  B  C  D  E  F  G  H      ");
+}
+
 void Chess::debugScan(short array[8][8]) {
   Serial.println("------------");
   Serial.println("  ABCDEFGH  ");
@@ -1155,8 +1180,10 @@ void Chess::setPgnMove() {
   }
   
   if (strlen(lastPgnTurn) > 0) {
+    Serial.print("writing to SD");
     File file = SD.open(fileName, FILE_WRITE);
     if (file) {
+      Serial.print("opened file");
       char toPrint[20] = "";
       if (whosTurn == 1) {
         char turnChars[3] = "";
@@ -1245,6 +1272,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
             if (board[row][col] == piece) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
+              Serial.println("found bishop");
               return true;
             }  else if (board[row][col] != 0) {
               blockingPiece = true;
@@ -1254,6 +1282,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           }
         }
       }
+      Serial.print("No Bishop Found");
       break;
     case 4: // rook
       for (short colDir = -1; colDir < 2; colDir += 2) { 
@@ -1332,6 +1361,8 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
       }
       break;
   }
+  
+  Serial.println("Shit, this aint working");
   return false;
 }
 
