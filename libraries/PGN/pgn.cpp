@@ -1,49 +1,22 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-#include <vector>
+#include "pgn.h"
 
-using namespace std;
-void stringParser(string a,string b);
-void pgnParserPieces(char x);
-void pgnParserRow(char y);
-void pgnParserColumn(char z);
-void pgnParserCheck(char w);
-std::string final_move ="";
-
-int main()
-{
-   string exampleString;
-   std::vector<string> testarray;
-   string color ="";
-  
-  ifstream in("input.txt");
-  while(in>>exampleString) {
-      testarray.push_back(exampleString);
-      /*cout<<exampleString<<endl;*/
-  }
-  
-  for (int i = 0; i < testarray.size(); ++i)
-  {
-    if(i%3 != 0) {
-        /* Run through functions*/
-        
-        stringParser(testarray[i],color);
-        // cout << final_move << endl;
-        // final_move = "";
-        color = "black";
+PGN::PGN(string file) :
+    File chosenfile = SD.open(file);
+    while(chosenfile.available()){
+        listOfMoves.push_back(chosenfile.read());
     }
-    else {
-        color = "white";
+    chosenFile.close();
+    for (int i = 0; i < listOfMoves.size(); ++i) {
+        if(i%3 != 0) {
+            stringParser(testarray[i],color);
+            color = "black";
+        }
+        else {
+            color = "white";
+        }
     }
 
-  }
-
-   return 0;
-}
-
-void stringParser(string a, string b){
+void PGN::stringParser(string a, string b){
     if (a.size() == 2){
         cout << "pawn" <<endl;
         // final_move.append("pawn");
@@ -184,7 +157,7 @@ void stringParser(string a, string b){
     }
 }
 
-void pgnParserPieces(char x) {
+void PGN::pgnParserPieces(char x) {
     switch (x) {
         case 'K':
             final_move.append("king");
@@ -211,7 +184,7 @@ void pgnParserPieces(char x) {
             break;
         }
 }
-void pgnParserRow(char y) {
+void PGN::pgnParserRow(char y) {
     switch (y) {
         case 'a':
            final_move.append("1");
@@ -250,7 +223,7 @@ void pgnParserRow(char y) {
             break;
         }
 }
-void pgnParserColumn(char z) {
+void PGN::pgnParserColumn(char z) {
     switch (z) {
         case '1':
             final_move.append("1");
@@ -290,7 +263,7 @@ void pgnParserColumn(char z) {
         }
         /*got to next line and */
 }
-void pgnParserCheck(char w) {
+void PGN::pgnParserCheck(char w) {
     switch (w) {
         case '+':
             final_move.append("1");
