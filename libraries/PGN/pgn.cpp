@@ -49,19 +49,29 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][0]=a[2]-49;;
             boardList[boardMoves][1]=a[1]-97;
             boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (a[2] == '+' || a[2] == '#'){
             boardList[boardMoves][0]=a[1]-49;
             boardList[boardMoves][1]=a[0]-97;
             boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
-        // else if (a[0] == "O" ) {
-            // do castle move
-        // }
+        else if (a[0] == "O" ) {
+            boardList[boardMoves][0]=0;
+            boardList[boardMoves][1]=0;
+            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
+        }
         else {
             boardList[boardMoves][0]=a[2]-49;
             boardList[boardMoves][1]=a[1]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
     }
 
@@ -74,49 +84,71 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][0]=a[2]-49;
             boardList[boardMoves][1]=a[1]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
+        }
+        else if (a[0] == "O" ) {
+            boardList[boardMoves][0]=0;
+            boardList[boardMoves][1]=0;
+            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (a[0] == 'x') {
             boardList[boardMoves][0]=a[2]-49;
             boardList[boardMoves][1]=a[1]-97;
             boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (isupper(a[0]) && a[1] == 'x') {
             boardList[boardMoves][0]=a[3]-49;
             boardList[boardMoves][1]=a[2]-97;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
             pgnParserPieces(a[0],b);
         }
         else if (isupper(a[0]) && a[1] != 'x' && a[3] == '+') {
-            // final_move.append("pawn");
             boardList[boardMoves][0]=a[2]-49;
             boardList[boardMoves][1]=a[1]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (isupper(a[0]) && a[1] != 'x' && isdigit(a[1])) {
-            // final_move.append("pawn");
             boardList[boardMoves][0]=a[3]-49;
             boardList[boardMoves][1]=a[2]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
          else if (a[3] == '+' || a[3] == '#'){
             boardList[boardMoves][0]=a[1]-49;
             boardList[boardMoves][1]=a[0]-97;
             pgnParserPieces(a[2],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (a[2] == '='){
             boardList[boardMoves][0]=a[1]-49;
             boardList[boardMoves][1]=a[0]-97;
             pgnParserPieces(a[3],b);
+            boardList[boardMoves][3]=-2;
+            boardList[boardMoves][4]=-2;
         }
         else if (isupper(a[0]) && a[1] != 'x' && isalpha(a[1])) {
-            // final_move.append("pawn");
             boardList[boardMoves][0]=a[3]-49;
             boardList[boardMoves][1]=a[2]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (islower(a[0])) {
             boardList[boardMoves][0]=a[3]-49;
             boardList[boardMoves][1]=a[2]-97;
             boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
             // else {
             // pgnParserPieces(a[1],b);
@@ -133,17 +165,30 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][0]=a[2]-49;
             boardList[boardMoves][1]=a[1]-97;
             pgnParserPieces(a[4],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else if (isupper(a[0]) && a[1] == 'x') {
             boardList[boardMoves][0]=a[3]-49;
             boardList[boardMoves][1]=a[2]-97;
             pgnParserPieces(a[0],b);
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
+        }
+        else if (a[0] == "O" ) {
+            boardList[boardMoves][0]=0;
+            boardList[boardMoves][1]=0;
+            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
         }
         else {
             if (islower(a[0])) {
                 boardList[boardMoves][0]=a[1]-49;
                 boardList[boardMoves][1]=a[0]-97;
                 pgnParserPieces(a[3],b);
+                boardList[boardMoves][3]=-2;
+                boardList[boardMoves][4]=-2;
             }
             // else {
             //     pgnParserPieces(a[1],b);
@@ -153,9 +198,22 @@ void PGN::stringParser(String a, short b) {
         }
     }
     else if (a.length() == 6) {
-        boardList[boardMoves][0]=a[2]-49;
-        boardList[boardMoves][1]=a[1]-97;
-        pgnParserPieces(a[4],b);
+        if (a[0] == "O" ) {
+            boardList[boardMoves][0]=0;
+            boardList[boardMoves][1]=0;
+            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][3]=-2;
+            boardList[boardMoves][3]=-2;
+            boardList[boardMoves][3]=-1;
+            boardList[boardMoves][4]=-1;
+        }
+        else {
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            pgnParserPieces(a[4],b);
+            boardList[boardMoves][3]=-2;
+            boardList[boardMoves][4]=-2;
+        }
     }
     boardList[boardMoves][3] = -1;
     boardList[boardMoves][4] = -1;
