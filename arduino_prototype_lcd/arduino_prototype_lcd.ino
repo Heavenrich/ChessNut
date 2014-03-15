@@ -87,6 +87,7 @@ void setup() {
 
 void loop() {
   if (enableNew && digitalRead(newGame)) {
+    chess.leds->turnOff();
     chess.setRed(false);
     enableNew = false;
     state = CLOCK_MENU;
@@ -103,14 +104,17 @@ void loop() {
 
   if (enableLoad && digitalRead(loadGame)) {
     chess.setRed(false);
+    chess.leds->turnOff();
     enableLoad = false;
-    //state = LOAD_GAME;
     if (!SD.exists("boot.bin")){
       if (!SD.begin()) {
         lcd.print("No SD card inserted!");
       }
     }
-    state = IDLE;
+
+    chess.resetSetupBoard();
+    state = LOAD_GAME;
+    chess.loadGame();
   } else if (!digitalRead(newGame)) {
     enableLoad = true;
   }
@@ -137,6 +141,10 @@ void loop() {
       } else {
         state = SCANNING;
       }
+    }
+  } else if (state == LOAD_GAME) {
+    if (chess.setupBoard()) {
+      state = SCANNING;
     }
   } else if (state == SCANNING) {
     short chessLoop = chess.loop();
