@@ -1132,7 +1132,6 @@ void Chess::setPgnMove(short edgeCase) {
   } else if (edgeCase == pgn_castleQueen) {
     strcat(lastPgnTurn,"O-O-O");
   } else if (numReducedMoves == 2) {
-    // take occurred
     switch (board[reducedMoves[0][1]][reducedMoves[0][2]]*whosTurn) {
       case 2:
         strcat(lastPgnTurn,"N");
@@ -1158,7 +1157,7 @@ void Chess::setPgnMove(short edgeCase) {
       strcat(lastPgnTurn,"x");
     }
     
-    switch (moves[1][2]) {
+    switch (reducedMoves[1][2]) {
       case 0:
         strcat(lastPgnTurn,"a");
         break;
@@ -1220,8 +1219,51 @@ void Chess::setPgnMove(short edgeCase) {
     
     Serial.println(lastPgnTurn);
   } else if (numReducedMoves == 3) {
-    // en passant
-    // lastPgnTurn
+    short row;
+    short col;
+    for (short i = 0; i < 3; i ++) {
+      if (reducedMoves[i][0] == 1) {
+        row = reducedMoves[i][1];
+        col = reducedMoves[i][2];
+      }
+    }
+    strcat(lastPgnTurn, "x");
+    
+    switch (col) {
+      case 0:
+        strcat(lastPgnTurn,"a");
+        break;
+      case 1:
+        strcat(lastPgnTurn,"b");
+        break;
+      case 2:
+        strcat(lastPgnTurn,"c");
+        break;
+      case 3:
+        strcat(lastPgnTurn,"d");
+        break;
+      case 4:
+        strcat(lastPgnTurn,"e");
+        break;
+      case 5:
+        strcat(lastPgnTurn,"f");
+        break;
+      case 6:
+        strcat(lastPgnTurn,"g");
+        break;
+      case 7:
+        strcat(lastPgnTurn,"h");
+        break;
+      default:
+        break;
+    }
+    
+    char column[1] = "";
+    strcat(lastPgnTurn, itoa(row + 1, column, 10));
+    
+    if (kingAttackers[(-1*whosTurn+1)/2] > 0) {
+       strcat(lastPgnTurn,"+");
+    }
   }
   
   if (strlen(lastPgnTurn) > 0) {
