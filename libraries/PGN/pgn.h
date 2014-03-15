@@ -3,25 +3,19 @@
 
 #include <Arduino.h>
 #include <SD.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-#include <vector>
 
 
 class PGN {
 public:
-	PGN(string file);
-	void stringParser(string a,string b);
-	void pgnParserPieces(char x);
-	void pgnParserRow(char y);
-	void pgnParserColumn(char z);
-	void pgnParserCheck(char w);
-	std::string final_move = "";
+	PGN(char file[12]);
+	void stringParser(String a,short b);
+	void pgnParserPieces(char x, short b);
 
-
-	string exampleString;
-	std::vector<string> listOfMoves;
-	string color = "";
+	String listOfMoves[20];
+	short boardList[20][5];
+	short boardMoves;
+	short movesCount;
+	short color;
 };
+
+#endif

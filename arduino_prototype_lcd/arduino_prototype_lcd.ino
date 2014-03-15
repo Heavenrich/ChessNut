@@ -9,6 +9,7 @@
 #include "ClockMenu.h"
 #include "ClockTimer.h"
 #include "Clock.h"
+#include "pgn.h"
 
 char cols[8] = {
   'A','B','C','D','E','F','G','H'
@@ -121,7 +122,7 @@ void loop() {
       }
       Serial.println("SD card initialized");
     }
-
+    
     chess.resetSetupBoard();
     state = LOAD_GAME;
     chess.loadGame();
