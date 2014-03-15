@@ -81,7 +81,19 @@ void stringParser(string a, string b){
     // pawn doing a en passon use . equals or big piece eating another or                   pawn putting another in check
     // OR same pieces move to one spot (rooks,QQ, knight)
     else if (a.size() == 4){
-        if (a[0] == 'x') {
+        if (a[3] == '#') {
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (a[0] == 'x') {
+            cout << "pawn" << endl;
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (a[0] == 'x') {
             cout << "pawn" << endl;
             pgnParserRow(a[1]);
             pgnParserColumn(a[2]);
@@ -92,14 +104,20 @@ void stringParser(string a, string b){
             pgnParserRow(a[2]);
             pgnParserColumn(a[3]);
         }
-        else if (isupper(a[0]) && a[1] != 'x') {
+        else if (isupper(a[0]) && a[1] != 'x' && a[3] == '+') {
             // final_move.append("pawn");
             pgnParserPieces(a[0]);
             pgnParserRow(a[1]);
             pgnParserColumn(a[2]);
             pgnParserCheck(a[3]);
         }
-        else if (a[3] == '+' || a[3] == '#'){
+        else if (isupper(a[0]) && a[1] != 'x' && isdigit(a[1])) {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+         else if (a[3] == '+' || a[3] == '#'){
             pgnParserRow(a[0]);
             pgnParserColumn(a[1]);
             pgnParserPieces(a[2]);
@@ -110,19 +128,23 @@ void stringParser(string a, string b){
             pgnParserColumn(a[1]);
             pgnParserPieces(a[3]);
         }
-        else {
-            if (islower(a[0])) {
+        else if (isupper(a[0]) && a[1] != 'x' && isalpha(a[1])) {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+        else if (islower(a[0])) {
                  final_move.append("pawn");
                  cout<<"pawn"<<endl;
                  pgnParserRow(a[2]);
                  pgnParserColumn(a[3]);
-            }
-            else {
-            pgnParserPieces(a[1]);
-            pgnParserRow(a[2]);
-            pgnParserColumn(a[3]);
-            }
         }
+            // else {
+            // pgnParserPieces(a[1]);
+            // pgnParserRow(a[2]);
+            // pgnParserColumn(a[3]);
+            // }
     }
     // 5 chars either for pawn promoting and check OR
     // 2 of same pieces going to a place with check in mind(rooks,pawns,QQ) OR
