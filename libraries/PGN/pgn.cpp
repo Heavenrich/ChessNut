@@ -62,6 +62,7 @@ void stringParser(string a, string b){
         }
         else if (a[2] == '+' || a[2] == '#'){
             // final_move.append("pawn");
+            cout << "pawn" << endl;
             pgnParserRow(a[0]);
             pgnParserColumn(a[1]);
             pgnParserCheck(a[2]);
@@ -77,16 +78,28 @@ void stringParser(string a, string b){
     }
     // 4 chars either for pawn promoting
     // pawn eating another piece and in check
-    // pawn doing a en passon use . equals or big piece eating another or in check
+    // pawn doing a en passon use . equals or big piece eating another or                   pawn putting another in check
     // OR same pieces move to one spot (rooks,QQ, knight)
     else if (a.size() == 4){
         if (a[0] == 'x') {
-            // final_move.append("pawn");
+            cout << "pawn" << endl;
             pgnParserRow(a[1]);
             pgnParserColumn(a[2]);
             pgnParserCheck(a[3]);
         }
-        if (a[3] == '+' || a[3] == '#'){
+        else if (isupper(a[0]) && a[1] == 'x') {
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+        else if (isupper(a[0]) && a[1] != 'x') {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (a[3] == '+' || a[3] == '#'){
             pgnParserRow(a[0]);
             pgnParserColumn(a[1]);
             pgnParserPieces(a[2]);
@@ -97,43 +110,49 @@ void stringParser(string a, string b){
             pgnParserColumn(a[1]);
             pgnParserPieces(a[3]);
         }
-        // else {
-        //     if (islower(a[0])) {
-        //          handle en passon case for if upper case else
-        //          EATS ANOTHER PIECE, THEN TAKES THE DIAGONAL
-        //          final_move.append("pawn");
-        //          pgnParserRow(a[2]);
-        //          pgnParserColumn(a[3]);
-        //     }
-        //     else {
-        //     pgnParserPieces(a[1]);
-        //     HANDLES WHERE THE PIECE WAS BEFORE(MAKE ANOTHER FUNCTION) 
-        //     pgnParserRow(a[2]);
-        //     pgnParserColumn(a[3]);
-        //     }
-        // }
+        else {
+            if (islower(a[0])) {
+                 final_move.append("pawn");
+                 cout<<"pawn"<<endl;
+                 pgnParserRow(a[2]);
+                 pgnParserColumn(a[3]);
+            }
+            else {
+            pgnParserPieces(a[1]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+            }
+        }
     }
     // 5 chars either for pawn promoting and check OR
     // 2 of same pieces going to a place with check in mind(rooks,pawns,QQ) OR
     // big pieces overtaking and doing a check
     else if (a.size() == 5){
-        if (a[0] != 'x') {
+        if (a[0] == 'x') {
             // handles both cases
-            pgnParserRow(a[0]);
-            pgnParserColumn(a[1]);
-            pgnParserPieces(a[3]);
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserPieces(a[4]);
         }
-        // else {
-        //     if (islower(a[0])) {
-        //         handle en passon case for if upper case else
-        //     }
-         //     else {
-        //     pgnParserPieces(a[1]);
-        //     HANDLES WHERE THE PIECE WAS BEFORE(MAKE ANOTHER FUNCTION) 
-        //     pgnParserRow(a[2]);
-        //     pgnParserColumn(a[3]);
-        //     }
-        // }
+        else if (isupper(a[0]) && a[1] == 'x') {
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+            pgnParserCheck(a[4]);
+        }
+        else {
+            if (islower(a[0])) {
+                pgnParserPieces(a[3]);
+                pgnParserRow(a[0]);
+                pgnParserColumn(a[1]);
+                pgnParserCheck(a[4]);  
+            }
+            // else {
+            //     pgnParserPieces(a[1]);
+            //     pgnParserRow(a[2]);
+            //     pgnParserColumn(a[3]);
+            // }
+        }
     }
     else if (a.size() == 6) {
         pgnParserRow(a[1]);
