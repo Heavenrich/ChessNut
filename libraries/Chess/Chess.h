@@ -12,22 +12,22 @@
 class Chess {
   public:
     Chess(short delayRead, short endTurn, short redLed, Lcd *lcd, Leds *leds, char cols[8], short gridInput[8], short gridOutput[8]);
-    boolean newGame(short whiteTime = 0, short blackTime = 0);
+    boolean newGame(short whiteTime = 0, short blackTime = 0); // set board, is initialized? -> startGame()
     boolean initialize();
-    void startGame();
-    boolean startClock();
-    short loop();
+    void startGame(); // let game begin, or if clock let them press select to start the game
+    boolean startClock(); // if board is still initialized start the game
+    short loop(); // main loop, return a loop_ variable if endTurn, promotion, or clock timeout
     boolean scanBoard(boolean continuous = true, boolean output = true);
-    void setPromotedPiece(short piece);
-    void setRed(boolean on);
+    void setPromotedPiece(short piece); // user has chosen "piece" for pawn promotion
+    void setRed(boolean on); // set the red led
     void loadGame();
-    boolean setupBoard();
-    void resetSetupBoard();
+    boolean setupBoard(); // loop for physically setting up board, return true if done
+    void resetSetupBoard(); // should be called once before physically setting the board
 
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
-    static const short loop_timeout = 3;
+    static const short loop_timeout = 3; // clock ran out
     String shortForms[7];
     char fileName[10];
     Leds *leds;
@@ -38,16 +38,16 @@ class Chess {
     void detectMove();
     boolean turnEnd();
     void reduceMoves();
-    void debugBoard(short array[8][8]);
-    void debugScan(short array[8][8]);
-    void outputBoard(boolean debug = true);
+    void debugBoard(short array[8][8]); // Serial output
+    void debugScan(short array[8][8]); // Serial output
+    void outputBoard(boolean debug = true); // print up to 10 squares that are activated to lcd
     boolean isValidMove(short piece, short movesToCheck[2][2]);
     boolean checkCollisions (short movesToCheck[2][2]);
     boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     short sign(short val);
     boolean isSlide(short down, short row, short col);
-    void resetFixes();
-    void fixBoard(String message = "", short lcdRow = 0);
+    void resetFixes(); // called once before fixBoard
+    void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove();
     void moveAttacker(short attackRow, short attackCol, short piece);
     
@@ -100,12 +100,11 @@ class Chess {
     short currScan[8][8];
     short diff[8][8];
     short board[8][8];
-    short nFixes;
-    short fix[3][2];
-    String fixMessage;
-    short setupPosition[2];
-    short setPosition[2];
-    boolean forceLoadSelect;
+    short nFixes; // # of current squares to fix, from fixBoard
+    short fix[5][2]; // array of col and rows of squares different than board, set in fixBoard
+    short setupPosition[2]; // current col row being set
+    short setPosition[2]; // last col row of piece set up
+    boolean forceLoadSelect; // if true make player press endTurn to confirm it contains right piece
     
     Lcd *lcd;
 };
