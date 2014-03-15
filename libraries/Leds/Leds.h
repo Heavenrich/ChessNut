@@ -5,7 +5,7 @@
 
 class Leds {
   public:
-    Leds(short pins[7]);
+    Leds(short pins[8]);
     void setLEDPattern(short row, short column);
     void lightWhosTurn(short whosTurn);
     void errorWhosTurn(short whosTurn);

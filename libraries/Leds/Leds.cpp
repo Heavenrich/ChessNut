@@ -1,6 +1,6 @@
 #include "Leds.h"
 
-Leds::Leds(short pins[7]) :
+Leds::Leds(short pins[8]) :
   ledInput(false),
   ledControl(pins)
 {
@@ -20,6 +20,7 @@ void Leds::lightWhosTurn(short whosTurn) {
   } else {
     setLED(true, 7);
   }
+  flipLEDs();
 }
 
 void Leds::turnOff() {
@@ -43,6 +44,7 @@ boolean Leds::flipLEDs(boolean flip, boolean input) {
     ledInput = input;
   }
   digitalWrite(ledControl[6], ledInput);
+  digitalWrite(ledControl[7], ledInput);
   
   return ledInput;
 }

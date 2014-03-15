@@ -39,7 +39,7 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
 // set board, is initialized? -> startGame()
 boolean Chess::newGame(short whiteTime, short blackTime) {
   numMoves = 0;
-  whosTurn = 1;
+  setWhosTurn(1);
   lcd->clear();
   clock.set(whiteTime, blackTime);
   resetFixes();
@@ -146,6 +146,7 @@ short Chess::loop() {
       lcd->print("White");
     }
     lcd->print(" wins.");
+    leds->turnOff();
     return loop_timeout;
   }
   if (enableEndTurn && digitalRead(endTurn)) {
@@ -163,7 +164,7 @@ short Chess::loop() {
         setPgnMove();
         Serial.println("endTurn");
         clock.loop(whosTurn);
-        whosTurn *= -1;
+        setWhosTurn(whosTurn * -1);
         return loop_endTurn;
       }
     }
@@ -203,7 +204,7 @@ void Chess::setPromotedPiece(short piece) {
   clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   setPgnMove();
-  whosTurn *= -1;
+  setWhosTurn(whosTurn * -1);
 }
 
 // set the red led
@@ -1502,4 +1503,13 @@ boolean Chess::moveEnpassant(short attackRow, short attackCol) {
     }
   }
   return false;
+}
+
+void Chess::setWhosTurn(short s) {
+  if (s < 0) {
+    whosTurn = -1;
+  } else {
+    whosTurn = 1;
+  }
+  leds->lightWhosTurn(whosTurn);
 }
