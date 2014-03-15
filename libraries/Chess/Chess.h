@@ -49,7 +49,7 @@ class Chess {
     void scanRow(short row);
     void setDiff();
     void detectMove();
-    short turnEnd(); // return edge case for setPgn, 0 for false
+    short turnEnd(); // return edge case for setPgn, -1 for false
     void reduceMoves();
     void debugBoard(short array[8][8]); // Serial output
     void debugScan(short array[8][8]); // Serial output
@@ -61,18 +61,19 @@ class Chess {
     boolean isSlide(short down, short row, short col);
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
-    void setPgnMove(short edgeCase = pgn_normal);
+    void setPgnMove();
     boolean moveCastle(boolean kingSide);
     boolean movePromotion(short attackCol, short piece);
     boolean moveEnpassant(short attackRow, short attackCol);
     
     Clock clock;
     
-    static const short pgn_normal = 1;
-    static const short pgn_promotion = 2;
-    static const short pgn_castleKing = 3;
-    static const short pgn_castleQueen = 4;
-    static const short pgn_take = 5;
+    short pgn_state;
+    static const short pgn_normal = 0;
+    static const short pgn_promotion = 1;
+    static const short pgn_castleKing = 2;
+    static const short pgn_castleQueen = 3;
+    static const short pgn_take = 10;
     
     const short delayRead;
     const short nRows;
