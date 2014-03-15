@@ -60,9 +60,9 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][4]=-1;
         }
         else if (a[0] == "O" ) {
-            boardList[boardMoves][0]=0;
-            boardList[boardMoves][1]=0;
-            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][0]=-1;
+            boardList[boardMoves][1]=-1;
+            boardList[boardMoves][2]=6*b;
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
@@ -176,9 +176,9 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][4]=-1;
         }
         else if (a[0] == "O" ) {
-            boardList[boardMoves][0]=0;
-            boardList[boardMoves][1]=0;
-            boardList[boardMoves][2]=1*b;
+            boardList[boardMoves][0]=-2;
+            boardList[boardMoves][1]=-2;
+            boardList[boardMoves][2]=6*b;
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
@@ -199,11 +199,9 @@ void PGN::stringParser(String a, short b) {
     }
     else if (a.length() == 6) {
         if (a[0] == "O" ) {
-            boardList[boardMoves][0]=0;
-            boardList[boardMoves][1]=0;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-2;
-            boardList[boardMoves][3]=-2;
+            boardList[boardMoves][0]=-2;
+            boardList[boardMoves][1]=-2;
+            boardList[boardMoves][2]=6*b;
             boardList[boardMoves][3]=-1;
             boardList[boardMoves][4]=-1;
         }
@@ -215,8 +213,6 @@ void PGN::stringParser(String a, short b) {
             boardList[boardMoves][4]=-2;
         }
     }
-    boardList[boardMoves][3] = -1;
-    boardList[boardMoves][4] = -1;
     boardMoves++;
 }
 
