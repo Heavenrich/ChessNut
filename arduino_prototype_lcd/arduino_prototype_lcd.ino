@@ -1,9 +1,11 @@
+#include <SD.h>
 #include <LiquidCrystal.h>
 #include "Chess.h"
 #include "Promotion.h"
 #include "Symbols.h"
 #include "Menu.h"
 #include "Lcd.h"
+#include "Leds.h"
 #include "ClockMenu.h"
 #include "ClockTimer.h"
 #include "Clock.h"
@@ -29,8 +31,7 @@ short up = 9;
 short down = 10;
 short newGame = 11;
 short loadGame = 12;
-short endGame = 13;
-short scan = 13;
+short redLed = 13;
 boolean enableNew = true;
 boolean enableLoad = true;
 boolean enableEnd = true;
@@ -40,7 +41,8 @@ short whiteTime;
 short blackTime;
 
 Lcd lcd(27, 26, 25, 24, 23, 22);
-Chess chess(delayRead, endTurn, scan, &lcd, cols, gridInput, gridOutput);
+Leds leds(ledControl);
+Chess chess(delayRead, endTurn, redLed, &lcd, &leds, cols, gridInput, gridOutput);
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
 ClockTimer clockTimer(up, down, endTurn, &lcd);
@@ -70,7 +72,8 @@ void setup() {
   pinMode(down, INPUT);
   pinMode(newGame, INPUT);
   pinMode(loadGame, INPUT);
-  pinMode(endGame, INPUT);
+  pinMode(redLed, OUTPUT);
+  digitalWrite(redLed, LOW);
   Symbols::createChars(&lcd);
   lcd.begin(16, 2);
   state = IDLE;
@@ -84,21 +87,48 @@ void setup() {
 
 void loop() {
   if (enableNew && digitalRead(newGame)) {
+    chess.setRed(false);
     enableNew = false;
     state = CLOCK_MENU;
     clockMenu.reset();
+    if (!SD.exists("boot.bin")){
+      if (!SD.begin()) {
+        lcd.print("No SD card inserted!");
+        state = IDLE;
+      }
+    }
   } else if (!digitalRead(newGame)) {
     enableNew = true;
   }
 
   if (enableLoad && digitalRead(loadGame)) {
+    chess.setRed(false);
     enableLoad = false;
     //state = LOAD_GAME;
+    if (!SD.exists("boot.bin")){
+      if (!SD.begin()) {
+        lcd.print("No SD card inserted!");
+      }
+    }
+    state = IDLE;
   } else if (!digitalRead(newGame)) {
     enableLoad = true;
   }
 
   if (state == NEW_GAME) {
+    short fileNum = 0;
+    char fileName[5];
+    char ret[10];
+    strcpy(ret, itoa(fileNum, fileName, 10));
+    strcat(ret, ".pgn");
+    while (SD.exists(ret)) {
+      fileNum++;
+      strcpy(ret, itoa(fileNum, fileName, 10));
+      strcat(ret, ".pgn");
+    }
+    
+    memcpy(chess.fileName, ret, sizeof(chess.fileName));
+    
     if (chess.initialize()) {
       chess.startGame();
       if (gameType == ClockMenu::timer) {
@@ -129,6 +159,7 @@ void loop() {
       clockTimer.reset();
     } else if (gameType == ClockMenu::noTimer) {
       state = NEW_GAME;
+      
       if (chess.newGame()) {
         state = SCANNING;
       }

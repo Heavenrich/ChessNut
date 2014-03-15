@@ -1,7 +1,8 @@
 #include "Chess.h"
+#include <stdio.h>
 
-Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPins[8], short outPins[8]) :
-  clock(l),
+Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[8], short inPins[8], short outPins[8]) :
+  clock(lc),
   pawn(1),
   knight(2),
   bishop(3),
@@ -12,8 +13,9 @@ Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPi
   nRows(8),
   endTurn(end),
   enableEndTurn(true),
-  scan(s),
+  scan(d),
   enableScan(true),
+  redLed(red),
   whosTurn(1),
   numMoves(0),
   castlingKing(0),
@@ -21,7 +23,8 @@ Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPi
   cols(colLetters),
   gridInput(inPins),
   gridOutput(outPins),
-  lcd(l)
+  lcd(lc),
+  leds(led)
 {
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
@@ -31,6 +34,12 @@ Chess::Chess(short d, short end, short s, Lcd *l, char colLetters[8], short inPi
   castlingArrivals[castlingKing][1] = 5;
   castlingArrivals[castlingQueen][0] = 2;
   castlingArrivals[castlingQueen][1] = 3;
+  shortForms[pawn] = "P";
+  shortForms[knight] = "N";
+  shortForms[bishop] = "B";
+  shortForms[rook] = "R";
+  shortForms[queen] = "Q";
+  shortForms[king] = "K";
 }
 
 boolean Chess::newGame(short whiteTime, short blackTime) {
@@ -80,6 +89,7 @@ boolean Chess::initialize() {
   }
   
   if (initialized) {
+    setRed(false);
     memcpy(prevScan, currScan, sizeof(prevScan));
     kingPositions[0][0] = 7;
     kingPositions[0][1] = 4;
@@ -87,6 +97,7 @@ boolean Chess::initialize() {
     kingPositions[1][1] = 4;
     clock.writeTimes();
   } else {
+    setRed(true);
     if (nFixes == 0) {
       Serial.println("set up to start!");
     }
@@ -122,6 +133,7 @@ boolean Chess::startClock() {
 
 short Chess::loop() {
   if (!clock.loop(whosTurn)) {
+    setRed(true);
     lcd->clear();
     lcd->print("Time ran out!");
     lcd->setCursor(0, 1);
@@ -186,6 +198,10 @@ void Chess::setPromotedPiece(short piece) {
   clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   whosTurn *= -1;
+}
+
+void Chess::setRed(boolean on) {
+  digitalWrite(redLed, on);
 }
 
 void Chess::scanRow(short row) {
@@ -293,6 +309,7 @@ boolean Chess::turnEnd() {
   if (numReducedMoves == 0) {
     lcd->clearLine();
     lcd->print("no moves");
+    setRed(false);
     return false;
   } else if (numReducedMoves == 2) {
     short fromIndex = 0;
@@ -306,6 +323,7 @@ boolean Chess::turnEnd() {
     ) {
       fixBoard("bad");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
 	
@@ -313,6 +331,7 @@ boolean Chess::turnEnd() {
     if (!isValidMove(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]], validatorMoves)) {
       fixBoard("invalid");
       Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
     
@@ -329,7 +348,6 @@ boolean Chess::turnEnd() {
         checkBoard[i][j] = board[i][j];
       }
     }
-    // memcpy(checkBoard, board, sizeof(checkBoard));
     checkBoard[reducedMoves[1][1]][reducedMoves[1][2]] =  checkBoard[reducedMoves[0][1]][reducedMoves[0][2]];
     checkBoard[reducedMoves[0][1]][reducedMoves[0][2]] =  0;
     
@@ -342,6 +360,7 @@ boolean Chess::turnEnd() {
       }
       lcd->print(", in check");
       Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
     
@@ -374,16 +393,120 @@ boolean Chess::turnEnd() {
       kingPositions[(whosTurn+1)/2][1] = reducedMoves[1][2];
     }
     
+    setRed(false);
     return true;
   } 
   else if (numReducedMoves == 3) {
-    short col = reducedMoves[0][2];
+    Serial.println("Possible Enpassant");
     short row = reducedMoves[0][1];
+    short col = reducedMoves[0][2];
     
-    if (col != reducedMoves[1][2] && col != reducedMoves[2][2]) {
-      return false;
-    }
-    if (row != reducedMoves[1][1] && row != reducedMoves[2][1]) {
+    if (row == reducedMoves[1][1]){
+      Serial.println("Case 2/3");
+      if (abs(reducedMoves[1][2] - reducedMoves[0][2]) != 1) {
+        Serial.println("too many cells moved");
+        fixBoard("bad");
+        Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+        setRed(true);
+        return false;
+      }
+       
+    } else if (row == reducedMoves[2][1]) {
+      Serial.println("Case 1/4");
+      if (
+        reducedMoves[2][0] != -1 
+        || abs(reducedMoves[2][2] - reducedMoves[0][2]) != 1
+        || reducedMoves[1][1] - row != whosTurn
+      ) {
+        Serial.println("prelim failed");
+        fixBoard("bad");
+        Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+        setRed(true);
+        return false;
+      }
+      
+      short pawnStart = 0;
+      if (col - reducedMoves[1][2] == 0) {
+        pawnStart = 2;
+      }
+      
+      Serial.println("pawnStart: " + String(pawnStart));
+      
+      if (
+        board[reducedMoves[pawnStart][1]][reducedMoves[pawnStart][2]]*whosTurn != pawn 
+        || board[reducedMoves[2-pawnStart][1]][reducedMoves[2-pawnStart][2]]*whosTurn != pawn*-1
+      ) {
+        Serial.println("wrong pieces");
+        fixBoard("bad");
+        Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+        setRed(true);
+        return false;
+      }
+      
+      Serial.println(lastPgnTurn[0]);
+      Serial.println(lastPgnTurn[1]);
+      if (
+        lastPgnTurn[0] == tolower(cols[reducedMoves[2-pawnStart][2]]) 
+        && lastPgnTurn[1] == ('1' + reducedMoves[2-pawnStart][1])
+      ) {
+        Serial.println("En Passant occured");
+        short checkBoard[8][8];
+        for (short i = 0; i < 8; i++) {
+          for (short j = 0; j < 8; j++) {
+            checkBoard[i][j] = board[i][j];
+          }
+        }
+        checkBoard[reducedMoves[1][1]][reducedMoves[1][2]] = checkBoard[reducedMoves[0][1]][reducedMoves[0][2]];
+        checkBoard[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
+        checkBoard[reducedMoves[2][1]][reducedMoves[2][2]] = 0;
+        
+        if (inCheck(kingPositions[(-1*whosTurn+2)%3][0], kingPositions[(-1*whosTurn+2)%3][1], whosTurn, checkBoard)) {
+          lcd->clearLine();
+          if (whosTurn < 0) {
+            lcd->print("B");
+          } else {
+            lcd->print("W");
+          }
+          lcd->print(", in check");
+          Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+          setRed(true);
+          return false;
+        }
+        
+        boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
+    
+        setPgnMove();
+        
+        lcd->clearLine();
+        if (whosTurn < 0) {
+          lcd->print("B");
+        } else {
+          lcd->print("W");
+        }
+        debugScan(prevScan);
+        lcd->write(byte(whosTurn*board[reducedMoves[0][1]][reducedMoves[0][2]]));
+        lcd->print(" ");
+        lcd->print(cols[reducedMoves[0][2]]);
+        lcd->print(reducedMoves[0][1]+1);
+        lcd->print(" to ");
+        lcd->print(cols[reducedMoves[1][2]]);
+        lcd->print(reducedMoves[1][1]+1);
+        if (checked) {
+          lcd->print(" X");
+        }
+        
+        setRed(false);
+        
+        board[reducedMoves[1][1]][reducedMoves[1][2]] = board[reducedMoves[0][1]][reducedMoves[0][2]];
+        board[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
+        board[reducedMoves[2][1]][reducedMoves[2][2]] = 0;
+        return true;
+      }
+      
+    } else {
+      fixBoard("bad");
+      Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
+      setRed(true);
       return false;
     }
   }
@@ -444,6 +567,7 @@ boolean Chess::turnEnd() {
         board[castleColumn][castlingDepartures[castlingKing][1]] = 0;
       }
       
+      setRed(false);
       return true;
     }
   }
@@ -451,6 +575,7 @@ boolean Chess::turnEnd() {
   lcd->clearLine();
   lcd->print("too many moves");
 
+  setRed(true);
   return false;
 }
 
@@ -559,7 +684,7 @@ void Chess::outputBoard(boolean debug) {
     }
   }
   if (count == 0) {
-    lcd->write("nothing...");
+    lcd->print("nothing...");
   }
 }
 
@@ -880,6 +1005,7 @@ void Chess::setPgnMove() {
         lastPgnTurn[chars] = 'K';
         break;
       default:
+        chars--;
         break;
     }
     
@@ -920,11 +1046,187 @@ void Chess::setPgnMove() {
     }
     chars++;
     
-    lastPgnTurn[chars] = char(reducedMoves[1][1] + 1);
+    lastPgnTurn[chars] = '1' + reducedMoves[1][1];
     chars++;
     
     if (kingAttackers[whosTurn*-1] > 0) {
        lastPgnTurn[chars] = '+';
     }
+    
+    SD.open(fileName);
+    if (whosTurn == 1) {
+    }
+  }
+}
+
+boolean Chess::setupBoard() {
+  scanBoard(true, false);
+  for (short i = 0; i < nRows; i++) {
+    for (short j = 0; j < nRows; j++) {
+      short expectedScan = 1;
+      if (board[i][j] == 0) {
+        expectedScan = 0;
+      }
+      if (expectedScan != board[i][j]) {
+        if (setupPosition[0] != i || setupPosition[1] != j) {
+          setupPosition[0] = i;
+          setupPosition[1] = j;
+          lcd->clearLine();
+          leds->setLEDPattern(j, i);
+          if (expectedScan == 0) {
+            lcd->print("no piece");
+          } else {
+            if (board[i][j] > 0) {
+              lcd->print("W");
+            } else {
+              lcd->print("B");
+            }
+            lcd->write(byte(abs(board[i][j])));
+            lcd->print(" " + String(shortForms[abs(board[i][j])]));
+          }
+          lcd->setCursor(14, 0);
+          lcd->print(String(cols[j]) + String(i + 1));
+        }
+        return false;
+      }
+    }
+  }
+
+  setupPosition[0] = -1;
+  setupPosition[1] = -1;
+  leds->turnOff();
+  return true;
+}
+
+void Chess::moveAttacker(short attackRow, short attackCol, short piece) {
+  short col;
+	short row;
+  short turn = sign(piece);
+	boolean ownPiece;
+  
+  switch (turn*piece) {
+    boolean blockingPiece;
+    short row;
+    short col;
+    
+    case 1:
+      break;
+    case 2:
+      for (short colDir = -1; colDir < 2; colDir += 2) {
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          row = attackRow + rowDir;
+          col = attackCol + 2*colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            board[row][col] = 0;
+            board[attackRow][attackCol] = piece;
+            return;
+          }
+          
+          row = attackRow + 2*rowDir;
+          col = attackCol + colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            board[row][col] = 0;
+            board[attackRow][attackCol] = piece;
+            return;
+          }
+        }
+      }
+      break;
+    case 3:
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = attackCol + colDir;
+          row = attackRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+            if (board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return;
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    case 4:
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = attackCol + (colDir + rowDir)/2;
+          row = attackRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+            if (board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return;
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+        }
+      }
+      break;
+    case 5:
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = attackCol + (colDir + rowDir)/2;
+          row = attackRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+            if (board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return;
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+          
+          col = attackCol + colDir;
+          row = attackRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
+            if (board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return;
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    case 6:
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = attackCol + (colDir + rowDir)/2;
+          row = attackRow + (colDir + -1*rowDir)/2;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            board[row][col] = 0;
+            board[attackRow][attackCol] = piece;
+            return;
+          }
+          
+          col = attackCol + colDir;
+          row = attackRow + rowDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            board[row][col] = 0;
+            board[attackRow][attackCol] = piece;
+            return;
+          }
+        }
+      }
+      break;
   }
 }

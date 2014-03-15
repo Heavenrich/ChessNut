@@ -9,6 +9,7 @@ class Leds {
     void setLEDPattern(short row, short column);
     void lightWhosTurn(short whosTurn);
     void errorWhosTurn(short whosTurn);
+    void turnOff();
     
   private:
     boolean flipLEDs(boolean flip = true, boolean input = true);

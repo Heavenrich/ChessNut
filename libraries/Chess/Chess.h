@@ -2,14 +2,16 @@
 #define CHESS_H
 
 #include <Arduino.h>
+#include <SD.h>
 #include "Lcd.h"
+#include "Leds.h"
 #include "Clock.h"
 
 #define MAX_MOVES 50
 
 class Chess {
   public:
-    Chess(short delayRead, short endTurn, short scan, Lcd *lcd, char cols[8], short gridInput[8], short gridOutput[8]);
+    Chess(short delayRead, short endTurn, short redLed, Lcd *lcd, Leds *leds, char cols[8], short gridInput[8], short gridOutput[8]);
     boolean newGame(short whiteTime = 0, short blackTime = 0);
     boolean initialize();
     void startGame();
@@ -17,11 +19,14 @@ class Chess {
     short loop();
     boolean scanBoard(boolean continuous = true, boolean output = true);
     void setPromotedPiece(short piece);
+    void setRed(boolean on);
 
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
     static const short loop_promotion = 2;
     static const short loop_timeout = 3;
+    String shortForms[7];
+    char fileName[10];
     
   private:
     void scanRow(short row);
@@ -40,6 +45,8 @@ class Chess {
     void resetFixes();
     void fixBoard(String message = "", short lcdRow = 0);
     void setPgnMove();
+    boolean setupBoard();
+    void moveAttacker(short attackRow, short attackCol, short piece);
     
     Clock clock;
     
@@ -56,11 +63,13 @@ class Chess {
     boolean enableEndTurn;
     const short scan;
     boolean enableScan;
+    short redLed;
     
     char lastPgnTurn[6];
     
     // if 1, then white's turn, if -1 then black's turn
     short whosTurn;
+    short numTurns;
     
     // list of moves made this turn 
     // moves[0] = {-1, 2, 4} means the first move of the turn was a piece being removed from D2
@@ -79,9 +88,10 @@ class Chess {
     short castlingDepartures[2][2];
     const short castlingKing;
     const short castlingQueen;
-    char *cols;
-    short *gridInput;
-    short *gridOutput;
+    const char *cols;
+    const short *gridInput;
+    const short *gridOutput;
+    const char* file;
     
     short prevScan[8][8];
     short currScan[8][8];
@@ -90,8 +100,10 @@ class Chess {
     short nFixes;
     short fix[3][2];
     String fixMessage;
+    short setupPosition[2];
     
     Lcd *lcd;
+    Leds *leds;
 };
 
 #endif

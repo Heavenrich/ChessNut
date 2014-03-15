@@ -1,5 +1,5 @@
-#ifndef LEDS_H
-#define LEDS_H
+#ifndef LCD_H
+#define LCD_H
 
 #include <Arduino.h>
 #include <LiquidCrystal.h>

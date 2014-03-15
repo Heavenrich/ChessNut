@@ -22,8 +22,12 @@ void Leds::lightWhosTurn(short whosTurn) {
   }
 }
 
+void Leds::turnOff() {
+  flipLEDs(false, false);
+}
+
 void Leds::setLED(boolean isColumn, short index) {
-  int i = 0;
+  short i = 0;
   if (isColumn) {
     i = 3;
   }
