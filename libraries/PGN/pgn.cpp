@@ -7,23 +7,23 @@ PGN::PGN(char file[12]){
     String move = "";
     while(chosenfile.available()){
         char temp = chosenfile.read();
-        // Serial.println("read" + String(temp));
+        Serial.println("read" + String(temp));
         if (temp != ' ') {
             move += String(temp);
-            // Serial.println("strcat: " + String(move));
+            Serial.println("strcat: " + String(move));
         } else {
-            // Serial.println("listOfMoves " + String(move));
+            Serial.println("listOfMoves " + String(move));
             listOfMoves[movesCount] = move;
             movesCount++;
             move = "";
         }
     }
-    // Serial.println("movesCount: " + String(movesCount));
+    Serial.println("movesCount: " + String(movesCount));
 
     chosenfile.close();
     for (int i = 0; i < movesCount; i++) {
         if (i % 3 != 0) {
-            // Serial.println("stringParser: " + listOfMoves[i]);
+            Serial.println("stringParser: " + listOfMoves[i]);
             stringParser(listOfMoves[i],color);
             color = -1;
         }
