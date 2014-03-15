@@ -72,6 +72,7 @@ class Chess {
     static const short pgn_promotion = 2;
     static const short pgn_castleKing = 3;
     static const short pgn_castleQueen = 4;
+    static const short pgn_take = 5;
     
     const short delayRead;
     const short nRows;

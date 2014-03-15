@@ -495,6 +495,8 @@ short Chess::turnEnd() {
       && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
     ) {
       return pgn_promotion;
+    } else if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
+      return pgn_take;
     }
     return pgn_normal;
   } 
@@ -1133,7 +1135,7 @@ void Chess::setPgnMove(short edgeCase) {
         break;
     }
 
-    if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
+    if (edgeCase == pgn_take) {
       strcat(lastPgnTurn,"x");
     }
     
