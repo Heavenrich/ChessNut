@@ -49,7 +49,10 @@ class Chess {
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove();
-    void moveAttacker(short attackRow, short attackCol, short piece);
+    boolean moveAttacker(short attackRow, short attackCol, short piece, short fromRow = -1, short fromCol = -1);
+    boolean moveCastle(boolean kingSide);
+    boolean movePromotion(short attackCol, short piece);
+    boolean moveEnpassant(short attackRow, short attackCol);
     
     Clock clock;
     
