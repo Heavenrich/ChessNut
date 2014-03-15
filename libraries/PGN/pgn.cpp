@@ -1,120 +1,125 @@
 #include "pgn.h"
 
-PGN::PGN(string file) :
+PGN::PGN(char file[12]){
     File chosenfile = SD.open(file);
+    movesCount = 0;
+    boardMoves = 0;
+    String move = "";
     while(chosenfile.available()){
-        listOfMoves.push_back(chosenfile.read());
+        char temp = chosenfile.read();
+        // Serial.println("read" + String(temp));
+        if (temp != ' ') {
+            move += String(temp);
+            // Serial.println("strcat: " + String(move));
+        } else {
+            // Serial.println("listOfMoves " + String(move));
+            listOfMoves[movesCount] = move;
+            movesCount++;
+            move = "";
+        }
     }
-    chosenFile.close();
-    for (int i = 0; i < listOfMoves.size(); ++i) {
-        if(i%3 != 0) {
-            stringParser(testarray[i],color);
-            color = "black";
+    // Serial.println("movesCount: " + String(movesCount));
+
+    chosenfile.close();
+    for (int i = 0; i < movesCount; i++) {
+        if (i % 3 != 0) {
+            // Serial.println("stringParser: " + listOfMoves[i]);
+            stringParser(listOfMoves[i],color);
+            color = -1;
         }
         else {
-            color = "white";
+            color = 1;
         }
     }
+}
 
-void PGN::stringParser(string a, string b){
-    if (a.size() == 2){
-        cout << "pawn" <<endl;
-        // final_move.append("pawn");
-        pgnParserRow(a[0]);
-        pgnParserColumn(a[1]);
+void PGN::stringParser(String a, short b) {
+    if (a.length() == 2) {
+        boardList[boardMoves][0]=a[1]-49;
+        boardList[boardMoves][1]=a[0]-97;
+        boardList[boardMoves][2]=1*b;
     }
+    
     // 3 chars
     // pawn eating another piece
     // pawn moving in check
     // big piece moving
-    else if (a.size() == 3) {
+    else if (a.length() == 3) {
         if (a[0] == 'x') {
-            // final_move.append("pawn");
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
+            boardList[boardMoves][0]=a[2]-49;;
+            boardList[boardMoves][1]=a[1]-97;
+            boardList[boardMoves][2]=1*b;
         }
         else if (a[2] == '+' || a[2] == '#'){
-            // final_move.append("pawn");
-            cout << "pawn" << endl;
-            pgnParserRow(a[0]);
-            pgnParserColumn(a[1]);
-            pgnParserCheck(a[2]);
+            boardList[boardMoves][0]=a[1]-49;
+            boardList[boardMoves][1]=a[0]-97;
+            boardList[boardMoves][2]=1*b;
         }
         // else if (a[0] == "O" ) {
             // do castle move
         // }
         else {
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            pgnParserPieces(a[0],b);
         }
     }
+
     // 4 chars either for pawn promoting
     // pawn eating another piece and in check
     // pawn doing a en passon use . equals or big piece eating another or                   pawn putting another in check
     // OR same pieces move to one spot (rooks,QQ, knight)
-    else if (a.size() == 4){
+    else if (a.length() == 4){
         if (a[3] == '#') {
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
-            pgnParserCheck(a[3]);
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            pgnParserPieces(a[0],b);
         }
         else if (a[0] == 'x') {
-            cout << "pawn" << endl;
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
-            pgnParserCheck(a[3]);
-        }
-        else if (a[0] == 'x') {
-            cout << "pawn" << endl;
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
-            pgnParserCheck(a[3]);
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            boardList[boardMoves][2]=1*b;
         }
         else if (isupper(a[0]) && a[1] == 'x') {
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[2]);
-            pgnParserColumn(a[3]);
+            boardList[boardMoves][0]=a[3]-49;
+            boardList[boardMoves][1]=a[2]-97;
+            pgnParserPieces(a[0],b);
         }
         else if (isupper(a[0]) && a[1] != 'x' && a[3] == '+') {
             // final_move.append("pawn");
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
-            pgnParserCheck(a[3]);
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            pgnParserPieces(a[0],b);
         }
         else if (isupper(a[0]) && a[1] != 'x' && isdigit(a[1])) {
             // final_move.append("pawn");
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[2]);
-            pgnParserColumn(a[3]);
+            boardList[boardMoves][0]=a[3]-49;
+            boardList[boardMoves][1]=a[2]-97;
+            pgnParserPieces(a[0],b);
         }
          else if (a[3] == '+' || a[3] == '#'){
-            pgnParserRow(a[0]);
-            pgnParserColumn(a[1]);
-            pgnParserPieces(a[2]);
-            pgnParserCheck(a[3]);
+            boardList[boardMoves][0]=a[1]-49;
+            boardList[boardMoves][1]=a[0]-97;
+            pgnParserPieces(a[2],b);
         }
         else if (a[2] == '='){
-            pgnParserRow(a[0]);
-            pgnParserColumn(a[1]);
-            pgnParserPieces(a[3]);
+            boardList[boardMoves][0]=a[1]-49;
+            boardList[boardMoves][1]=a[0]-97;
+            pgnParserPieces(a[3],b);
         }
         else if (isupper(a[0]) && a[1] != 'x' && isalpha(a[1])) {
             // final_move.append("pawn");
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[2]);
-            pgnParserColumn(a[3]);
+            boardList[boardMoves][0]=a[3]-49;
+            boardList[boardMoves][1]=a[2]-97;
+            pgnParserPieces(a[0],b);
         }
         else if (islower(a[0])) {
-                 final_move.append("pawn");
-                 cout<<"pawn"<<endl;
-                 pgnParserRow(a[2]);
-                 pgnParserColumn(a[3]);
+            boardList[boardMoves][0]=a[3]-49;
+            boardList[boardMoves][1]=a[2]-97;
+            boardList[boardMoves][2]=1*b;
         }
             // else {
-            // pgnParserPieces(a[1]);
+            // pgnParserPieces(a[1],b);
             // pgnParserRow(a[2]);
             // pgnParserColumn(a[3]);
             // }
@@ -122,160 +127,58 @@ void PGN::stringParser(string a, string b){
     // 5 chars either for pawn promoting and check OR
     // 2 of same pieces going to a place with check in mind(rooks,pawns,QQ) OR
     // big pieces overtaking and doing a check
-    else if (a.size() == 5){
+    else if (a.length() == 5){
         if (a[0] == 'x') {
             // handles both cases
-            pgnParserRow(a[1]);
-            pgnParserColumn(a[2]);
-            pgnParserPieces(a[4]);
+            boardList[boardMoves][0]=a[2]-49;
+            boardList[boardMoves][1]=a[1]-97;
+            pgnParserPieces(a[4],b);
         }
         else if (isupper(a[0]) && a[1] == 'x') {
-            pgnParserPieces(a[0]);
-            pgnParserRow(a[2]);
-            pgnParserColumn(a[3]);
-            pgnParserCheck(a[4]);
+            boardList[boardMoves][0]=a[3]-49;
+            boardList[boardMoves][1]=a[2]-97;
+            pgnParserPieces(a[0],b);
         }
         else {
             if (islower(a[0])) {
-                pgnParserPieces(a[3]);
-                pgnParserRow(a[0]);
-                pgnParserColumn(a[1]);
-                pgnParserCheck(a[4]);  
+                boardList[boardMoves][0]=a[1]-49;
+                boardList[boardMoves][1]=a[0]-97;
+                pgnParserPieces(a[3],b);
             }
             // else {
-            //     pgnParserPieces(a[1]);
+            //     pgnParserPieces(a[1],b);
             //     pgnParserRow(a[2]);
             //     pgnParserColumn(a[3]);
             // }
         }
     }
-    else if (a.size() == 6) {
-        pgnParserRow(a[1]);
-        pgnParserColumn(a[2]);
-        pgnParserPieces(a[4]);
-        pgnParserCheck(a[5]);
+    else if (a.length() == 6) {
+        boardList[boardMoves][0]=a[2]-49;
+        boardList[boardMoves][1]=a[1]-97;
+        pgnParserPieces(a[4],b);
     }
+    boardMoves++;
 }
 
-void PGN::pgnParserPieces(char x) {
+void PGN::pgnParserPieces(char x, short b) {
     switch (x) {
         case 'K':
-            final_move.append("king");
-            cout<<"King"<<endl;
+            boardList[boardMoves][2]=6*b;
             break;
         case 'Q':
-            final_move.append("queen");        
-            cout<<"Queen"<<endl;
+            boardList[boardMoves][2]=5*b;        
             break;
         case 'R':
-            final_move.append("rook");
-            cout<<"Rook"<<endl;
+            boardList[boardMoves][2]=4*b;
             break;
         case 'B':
-            final_move.append("bishop");
-            cout<<"Bishop"<<endl;
+            boardList[boardMoves][2]=3*b;
             break;
         case 'N':
-            final_move.append("knight");
-            cout<<"Knight"<<endl;
+            boardList[boardMoves][2]=2*b;
             break;
         default:
-            cout<<"She put no choice"<<endl;
+            boardList[boardMoves][2]=1*b;
             break;
-        }
-}
-void PGN::pgnParserRow(char y) {
-    switch (y) {
-        case 'a':
-           final_move.append("1");
-            cout<<"1"<<endl;
-            break;
-        case 'b':
-            final_move.append("2");        
-            cout<<"2"<<endl;
-            break;
-        case 'c':
-            final_move.append("3");
-            cout<<"3"<<endl;
-            break;
-        case 'd':
-            final_move.append("4");
-            cout<<"4"<<endl;
-            break;
-        case 'e':
-            final_move.append("5");
-            cout<<"5"<<endl;
-            break;
-        case 'f':
-            final_move.append("6");
-            cout<<"6"<<endl;
-            break;
-        case 'g':
-            final_move.append("7");
-            cout<<"7"<<endl;
-            break;
-        case 'h':
-            final_move.append("8");
-            cout<<"8"<<endl;
-            break;
-        default:
-            cout<<"She put no choice"<<endl;
-            break;
-        }
-}
-void PGN::pgnParserColumn(char z) {
-    switch (z) {
-        case '1':
-            final_move.append("1");
-            cout<<"1"<<endl;
-            break;
-        case '2':
-            final_move.append("2");        
-            cout<<"2"<<endl;
-            break;
-        case '3':
-            final_move.append("3");
-            cout<<"3"<<endl;
-            break;
-        case '4':
-            final_move.append("4");
-            cout<<"4"<<endl;
-            break;
-        case '5':
-            final_move.append("5");
-            cout<<"5"<<endl;
-            break;
-        case '6':
-            final_move.append("6");
-            cout<<"6"<<endl;
-            break;
-        case '7':
-            final_move.append("7");
-            cout<<"7"<<endl;
-            break;
-        case '8':
-            final_move.append("8");
-            cout<<"8"<<endl;
-            break;
-        default:
-            cout<<"She put no choice"<<endl;
-            break;
-        }
-        /*got to next line and */
-}
-void PGN::pgnParserCheck(char w) {
-    switch (w) {
-        case '+':
-            final_move.append("1");
-            cout<<"Check"<<endl;
-            break;
-        case '#':
-            final_move.append("2");        
-            cout<<"CheckMATE"<<endl;
-            break;
-        default:
-            cout<<"She put no choice"<<endl;
-            break;
-        }
-        /*got to next line and */
+    }
 }
