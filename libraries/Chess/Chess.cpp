@@ -108,6 +108,7 @@ boolean Chess::initialize() {
 }
 
 void Chess::startGame() {
+  numTurns = 1;
   if (clock.enabled) {
     lcd->clearLine();
     lcd->print("press to start!");
@@ -150,6 +151,9 @@ short Chess::loop() {
     if (turnEnd()) {
       // save to pgn
       numMoves = 0;
+      if (whosTurn == 1) {
+        numTurns++;
+      }
       if (reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
           && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
       ) {
@@ -1073,78 +1077,92 @@ void Chess::fixBoard(String message, short lcdRow) {
 }
 
 void Chess::setPgnMove() {
-  memcpy(lastPgnTurn, (char[6]){' ',' ',' ',' ',' ',' '}, sizeof(lastPgnTurn));
-  short chars = 0;
+  strcpy(lastPgnTurn, "");
   
   if (numReducedMoves = 2) {
     // take occurred
-    switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
+    switch (board[reducedMoves[0][1]][reducedMoves[0][2]]*whosTurn) {
       case 2: 
-        lastPgnTurn[chars] = 'N';
+        strcat(lastPgnTurn,"N");
         break;
       case 3:
-        lastPgnTurn[chars] = 'B';
+        strcat(lastPgnTurn,"B");
         break;
       case 4:
-        lastPgnTurn[chars] = 'R';
+        strcat(lastPgnTurn,"R");
         break;
       case 5:
-        lastPgnTurn[chars] = 'Q';
+        strcat(lastPgnTurn,"Q");
         break;
       case 6:
-        lastPgnTurn[chars] = 'K';
+        strcat(lastPgnTurn,"K");
         break;
       default:
-        chars--;
+        strcat(lastPgnTurn,"");
         break;
     }
     
-    chars++;
-    
     if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
-      lastPgnTurn[chars] = 'x';
-      chars++;
+      strcat(lastPgnTurn,"x");
     }
     
     switch (moves[1][2]) {
       case 0:
-        lastPgnTurn[chars] = 'a';
+        strcat(lastPgnTurn,"a");
         break;
       case 1:
-        lastPgnTurn[chars] = 'b';
+        strcat(lastPgnTurn,"b");
         break;
       case 2:
-        lastPgnTurn[chars] = 'c';
+        strcat(lastPgnTurn,"c");
         break;
       case 3:
-        lastPgnTurn[chars] = 'd';
+        strcat(lastPgnTurn,"d");
         break;
       case 4:
-        lastPgnTurn[chars] = 'e';
+        strcat(lastPgnTurn,"e");
         break;
       case 5:
-        lastPgnTurn[chars] = 'f';
+        strcat(lastPgnTurn,"f");
         break;
       case 6:
-        lastPgnTurn[chars] = 'g';
+        strcat(lastPgnTurn,"g");
         break;
       case 7:
-        lastPgnTurn[chars] = 'h';
+        strcat(lastPgnTurn,"h");
         break;
       default:
         break;
     }
-    chars++;
     
-    lastPgnTurn[chars] = '1' + reducedMoves[1][1];
-    chars++;
+    char column[1] = "";
+    strcat(lastPgnTurn, itoa(reducedMoves[1][1] + 1, column, 10));
     
-    if (kingAttackers[whosTurn*-1] > 0) {
-       lastPgnTurn[chars] = '+';
+    if (kingAttackers[(-1*whosTurn+1)/2] > 0) {
+       strcat(lastPgnTurn,"+");
     }
     
-    SD.open(fileName);
-    if (whosTurn == 1) {
+    Serial.println(lastPgnTurn);
+  } else if (numReducedMoves = 3) {
+    // en passant
+    // lastPgnTurn
+  }
+  
+  if (strlen(lastPgnTurn) > 0) {
+    File file = SD.open(fileName, FILE_WRITE);
+    if (file) {
+      char toPrint[20] = "";
+      if (whosTurn == 1) {
+        char turnChars[3] = "";
+        strcpy(toPrint, itoa(numTurns, turnChars, 10));
+        strcat(toPrint, ". ");
+      }
+      strcat(toPrint, lastPgnTurn);
+      strcat(toPrint, " ");
+      file.print(toPrint);
+      file.close();
+    } else {
+      Serial.println("error opening file for move write");
     }
   }
 }
@@ -1161,6 +1179,9 @@ void Chess::moveAttacker(short attackRow, short attackCol, short piece) {
     short col;
     
     case 1:
+      // possible double move
+      //if (attackRow == 
+    
       break;
     case 2:
       for (short colDir = -1; colDir < 2; colDir += 2) {

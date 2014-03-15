@@ -87,17 +87,22 @@ void setup() {
 
 void loop() {
   if (enableNew && digitalRead(newGame)) {
+    if (!SD.exists("boot.bin")){
+      Serial.println("Boot file not found");
+      if (!SD.begin()) {
+        Serial.println("Initialization of SD card failed");
+        lcd.clear();
+        lcd.print("No SD card!");
+        return;
+      }
+      Serial.println("SD card initialized");
+    }
     chess.leds->turnOff();
     chess.setRed(false);
     enableNew = false;
     state = CLOCK_MENU;
     clockMenu.reset();
-    if (!SD.exists("boot.bin")){
-      if (!SD.begin()) {
-        lcd.print("No SD card inserted!");
-        state = IDLE;
-      }
-    }
+    
   } else if (!digitalRead(newGame)) {
     enableNew = true;
   }
@@ -107,9 +112,14 @@ void loop() {
     chess.leds->turnOff();
     enableLoad = false;
     if (!SD.exists("boot.bin")){
+      Serial.println("Boot file not found");
       if (!SD.begin()) {
-        lcd.print("No SD card inserted!");
+        Serial.println("Initialization of SD card failed");
+        lcd.clear();
+        lcd.print("No SD card!");
+        return;
       }
+      Serial.println("SD card initialized");
     }
 
     chess.resetSetupBoard();
@@ -131,6 +141,8 @@ void loop() {
       strcat(ret, ".pgn");
     }
     
+    Serial.print("Filename: ");
+    Serial.println(ret);    
     memcpy(chess.fileName, ret, sizeof(chess.fileName));
     
     if (chess.initialize()) {
@@ -169,6 +181,20 @@ void loop() {
       state = NEW_GAME;
       
       if (chess.newGame()) {
+        short fileNum = 0;
+        char fileName[5];
+        char ret[10];
+        strcpy(ret, itoa(fileNum, fileName, 10));
+        strcat(ret, ".pgn");
+        while (SD.exists(ret)) {
+          fileNum++;
+          strcpy(ret, itoa(fileNum, fileName, 10));
+          strcat(ret, ".pgn");
+        }
+        
+        Serial.print("Filename: ");
+        Serial.println(ret);    
+        memcpy(chess.fileName, ret, sizeof(chess.fileName));
         state = SCANNING;
       }
     }
