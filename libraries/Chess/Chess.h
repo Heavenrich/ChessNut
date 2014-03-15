@@ -26,6 +26,14 @@ class Chess {
     boolean moveAttacker(short attackRow, short attackCol, short piece, short fromRow = -1, short fromCol = -1);
     void debugCurrentBoard();
     void initializeBoard();
+
+
+    static const short pawn = 1;
+    static const short knight = 2;
+    static const short bishop = 3;
+    static const short rook = 4;
+    static const short queen = 5;
+    static const short king = 6;
     
     static const short loop_noUpdate = 0;
     static const short loop_endTurn = 1;
@@ -41,7 +49,7 @@ class Chess {
     void scanRow(short row);
     void setDiff();
     void detectMove();
-    boolean turnEnd();
+    short turnEnd(); // return edge case for setPgn, 0 for false
     void reduceMoves();
     void debugBoard(short array[8][8]); // Serial output
     void debugScan(short array[8][8]); // Serial output
@@ -53,19 +61,17 @@ class Chess {
     boolean isSlide(short down, short row, short col);
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
-    void setPgnMove();
+    void setPgnMove(short edgeCase = pgn_normal);
     boolean moveCastle(boolean kingSide);
     boolean movePromotion(short attackCol, short piece);
     boolean moveEnpassant(short attackRow, short attackCol);
     
     Clock clock;
     
-    const short pawn;
-    const short knight;
-    const short bishop;
-    const short rook;
-    const short queen;
-    const short king;
+    static const short pgn_normal = 1;
+    static const short pgn_promotion = 2;
+    static const short pgn_castleKing = 3;
+    static const short pgn_castleQueen = 4;
     
     const short delayRead;
     const short nRows;

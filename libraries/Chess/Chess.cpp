@@ -4,12 +4,6 @@
 Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[8], short inPins[8], short outPins[8]) :
   leds(led),
   clock(lc),
-  pawn(1),
-  knight(2),
-  bishop(3),
-  rook(4),
-  queen(5),
-  king(6),
   delayRead(d),
   nRows(8),
   endTurn(end),
@@ -156,18 +150,17 @@ short Chess::loop() {
   }
   if (enableEndTurn && digitalRead(endTurn)) {
     enableEndTurn = false;
-    if (turnEnd()) {
-      // save to pgn
+    short turnResult = turnEnd();
+    if (turnResult > 0) {
       numMoves = 0;
       if (whosTurn == 1) {
         numTurns++;
       }
-      if (reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
-          && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
-      ) {
+      if (turnResult == pgn_promotion) {
         Serial.println("promotion");
         return loop_promotion;
       } else {
+        setPgnMove(turnResult);
         Serial.println("endTurn");
         clock.loop(whosTurn);
         whosTurn *= -1;
@@ -209,6 +202,7 @@ void Chess::setPromotedPiece(short piece) {
   Serial.println("pawn promoted to " + String(whosTurn * piece));
   clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
+  setPgnMove(pgn_promotion);
   whosTurn *= -1;
 }
 
@@ -391,7 +385,7 @@ boolean Chess::isSlide(short down, short row, short col) {
   return false;
 }
 
-boolean Chess::turnEnd() {
+short Chess::turnEnd() {
   kingAttackers[0] = 0;
   kingAttackers[1] = 0;
   Serial.print("turn: ");
@@ -414,7 +408,7 @@ boolean Chess::turnEnd() {
     lcd->clearLine();
     lcd->print("no moves");
     setRed(false);
-    return false;
+    return 0;
   } else if (numReducedMoves == 2) {
     short fromIndex = 0;
     if (reducedMoves[0][1] == -1) {
@@ -428,7 +422,7 @@ boolean Chess::turnEnd() {
       fixBoard("bad");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       setRed(true);
-      return false;
+      return 0;
     }
 	
     short validatorMoves[2][2] =  {{reducedMoves[0][1], reducedMoves[0][2]},{reducedMoves[1][1], reducedMoves[1][2]}};    
@@ -436,7 +430,7 @@ boolean Chess::turnEnd() {
       fixBoard("invalid");
       Serial.println("piece cannot move like so " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       setRed(true);
-      return false;
+      return 0;
     }
     
     short kingRow = kingPositions[(whosTurn+1)/2][0];
@@ -465,12 +459,10 @@ boolean Chess::turnEnd() {
       lcd->print(", in check");
       Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       setRed(true);
-      return false;
+      return 0;
     }
     
     boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
-    
-    setPgnMove();
     
     lcd->clearLine();
     if (whosTurn < 0) {
@@ -498,7 +490,13 @@ boolean Chess::turnEnd() {
     }
     
     setRed(false);
-    return true;
+    if (
+      reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
+      && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
+    ) {
+      return pgn_promotion;
+    }
+    return pgn_normal;
   } 
   else if (numReducedMoves == 3) {
     Serial.println("Possible Enpassant");
@@ -512,7 +510,7 @@ boolean Chess::turnEnd() {
         fixBoard("bad");
         Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
         setRed(true);
-        return false;
+        return 0;
       }
        
     } else if (row == reducedMoves[2][1]) {
@@ -526,7 +524,7 @@ boolean Chess::turnEnd() {
         fixBoard("bad");
         Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
         setRed(true);
-        return false;
+        return 0;
       }
       
       short pawnStart = 0;
@@ -544,7 +542,7 @@ boolean Chess::turnEnd() {
         fixBoard("bad");
         Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
         setRed(true);
-        return false;
+        return 0;
       }
       
       Serial.println(lastPgnTurn[0]);
@@ -574,12 +572,10 @@ boolean Chess::turnEnd() {
           lcd->print(", in check");
           Serial.println("in check, invalid " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
           setRed(true);
-          return false;
+          return 0;
         }
         
         boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
-    
-        setPgnMove();
         
         lcd->clearLine();
         if (whosTurn < 0) {
@@ -604,14 +600,14 @@ boolean Chess::turnEnd() {
         board[reducedMoves[1][1]][reducedMoves[1][2]] = board[reducedMoves[0][1]][reducedMoves[0][2]];
         board[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
         board[reducedMoves[2][1]][reducedMoves[2][2]] = 0;
-        return true;
+        return pgn_normal;
       }
       
     } else {
       fixBoard("bad");
       Serial.println("invalid move " + String(board[reducedMoves[0][1]][reducedMoves[0][2]]) + " " + String(whosTurn));
       setRed(true);
-      return false;
+      return 0;
     }
   }
   // castling
@@ -658,21 +654,21 @@ boolean Chess::turnEnd() {
         lcd->print("W");
       }
       lcd->print("O-O");
+      setRed(false);
       if (validQueenSide) {
         lcd->print("-O");
         board[castleColumn][castlingArrivals[castlingQueen][0]] = king * whosTurn;
         board[castleColumn][castlingArrivals[castlingQueen][1]] = rook * whosTurn;
         board[castleColumn][castlingDepartures[castlingQueen][0]] = 0;
         board[castleColumn][castlingDepartures[castlingQueen][1]] = 0;
+        return pgn_castleQueen;
       } else {
         board[castleColumn][castlingArrivals[castlingKing][0]] = king * whosTurn;
         board[castleColumn][castlingArrivals[castlingKing][1]] = rook * whosTurn;
         board[castleColumn][castlingDepartures[castlingKing][0]] = 0;
         board[castleColumn][castlingDepartures[castlingKing][1]] = 0;
+        return pgn_castleKing;
       }
-      
-      setRed(false);
-      return true;
     }
   }
   
@@ -680,7 +676,7 @@ boolean Chess::turnEnd() {
   lcd->print("too many moves");
 
   setRed(true);
-  return false;
+  return 0;
 }
 
 void Chess::reduceMoves() {
@@ -1107,13 +1103,17 @@ void Chess::fixBoard(String message, short lcdRow) {
   nFixes = nWrong;
 }
 
-void Chess::setPgnMove() {
+void Chess::setPgnMove(short edgeCase) {
   strcpy(lastPgnTurn, "");
   
-  if (numReducedMoves = 2) {
+  if (edgeCase == pgn_castleKing) {
+    strcat(lastPgnTurn,"O-O");
+  } else if (edgeCase == pgn_castleQueen) {
+    strcat(lastPgnTurn,"O-O-O");
+  } else if (numReducedMoves == 2) {
     // take occurred
     switch (board[reducedMoves[0][1]][reducedMoves[0][2]]*whosTurn) {
-      case 2: 
+      case 2:
         strcat(lastPgnTurn,"N");
         break;
       case 3:
@@ -1132,7 +1132,7 @@ void Chess::setPgnMove() {
         strcat(lastPgnTurn,"");
         break;
     }
-    
+
     if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
       strcat(lastPgnTurn,"x");
     }
@@ -1169,12 +1169,36 @@ void Chess::setPgnMove() {
     char column[1] = "";
     strcat(lastPgnTurn, itoa(reducedMoves[1][1] + 1, column, 10));
     
+    if (edgeCase == pgn_promotion) {
+      strcat(lastPgnTurn, "=");
+      switch (board[reducedMoves[1][1]][reducedMoves[1][2]]) {
+        case 2: 
+          strcat(lastPgnTurn,"N");
+          break;
+        case 3:
+          strcat(lastPgnTurn,"B");
+          break;
+        case 4:
+          strcat(lastPgnTurn,"R");
+          break;
+        case 5:
+          strcat(lastPgnTurn,"Q");
+          break;
+        case 6:
+          strcat(lastPgnTurn,"K");
+          break;
+        default:
+          strcat(lastPgnTurn,"P");
+          break;
+      }
+    }
+    
     if (kingAttackers[(-1*whosTurn+1)/2] > 0) {
        strcat(lastPgnTurn,"+");
     }
     
     Serial.println(lastPgnTurn);
-  } else if (numReducedMoves = 3) {
+  } else if (numReducedMoves == 3) {
     // en passant
     // lastPgnTurn
   }
