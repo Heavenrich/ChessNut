@@ -65,6 +65,7 @@ class Chess {
     boolean moveCastle(boolean kingSide);
     boolean movePromotion(short attackCol, short piece);
     boolean moveEnpassant(short attackRow, short attackCol);
+    void setWhosTurn(boolean whosTurn);
     
     Clock clock;
     
