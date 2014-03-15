@@ -1,49 +1,22 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-#include <vector>
+#include "pgn.h"
 
-using namespace std;
-void stringParser(string a,string b);
-void pgnParserPieces(char x);
-void pgnParserRow(char y);
-void pgnParserColumn(char z);
-void pgnParserCheck(char w);
-std::string final_move ="";
-
-int main()
-{
-   string exampleString;
-   std::vector<string> testarray;
-   string color ="";
-  
-  ifstream in("input.txt");
-  while(in>>exampleString) {
-      testarray.push_back(exampleString);
-      /*cout<<exampleString<<endl;*/
-  }
-  
-  for (int i = 0; i < testarray.size(); ++i)
-  {
-    if(i%3 != 0) {
-        /* Run through functions*/
-        
-        stringParser(testarray[i],color);
-        // cout << final_move << endl;
-        // final_move = "";
-        color = "black";
+PGN::PGN(string file) :
+    File chosenfile = SD.open(file);
+    while(chosenfile.available()){
+        listOfMoves.push_back(chosenfile.read());
     }
-    else {
-        color = "white";
+    chosenFile.close();
+    for (int i = 0; i < listOfMoves.size(); ++i) {
+        if(i%3 != 0) {
+            stringParser(testarray[i],color);
+            color = "black";
+        }
+        else {
+            color = "white";
+        }
     }
 
-  }
-
-   return 0;
-}
-
-void stringParser(string a, string b){
+void PGN::stringParser(string a, string b){
     if (a.size() == 2){
         cout << "pawn" <<endl;
         // final_move.append("pawn");
@@ -62,6 +35,7 @@ void stringParser(string a, string b){
         }
         else if (a[2] == '+' || a[2] == '#'){
             // final_move.append("pawn");
+            cout << "pawn" << endl;
             pgnParserRow(a[0]);
             pgnParserColumn(a[1]);
             pgnParserCheck(a[2]);
@@ -77,16 +51,46 @@ void stringParser(string a, string b){
     }
     // 4 chars either for pawn promoting
     // pawn eating another piece and in check
-    // pawn doing a en passon use . equals or big piece eating another or in check
+    // pawn doing a en passon use . equals or big piece eating another or                   pawn putting another in check
     // OR same pieces move to one spot (rooks,QQ, knight)
     else if (a.size() == 4){
-        if (a[0] == 'x') {
-            // final_move.append("pawn");
+        if (a[3] == '#') {
+            pgnParserPieces(a[0]);
             pgnParserRow(a[1]);
             pgnParserColumn(a[2]);
             pgnParserCheck(a[3]);
         }
-        if (a[3] == '+' || a[3] == '#'){
+        else if (a[0] == 'x') {
+            cout << "pawn" << endl;
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (a[0] == 'x') {
+            cout << "pawn" << endl;
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (isupper(a[0]) && a[1] == 'x') {
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+        else if (isupper(a[0]) && a[1] != 'x' && a[3] == '+') {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserCheck(a[3]);
+        }
+        else if (isupper(a[0]) && a[1] != 'x' && isdigit(a[1])) {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+         else if (a[3] == '+' || a[3] == '#'){
             pgnParserRow(a[0]);
             pgnParserColumn(a[1]);
             pgnParserPieces(a[2]);
@@ -97,43 +101,53 @@ void stringParser(string a, string b){
             pgnParserColumn(a[1]);
             pgnParserPieces(a[3]);
         }
-        // else {
-        //     if (islower(a[0])) {
-        //          handle en passon case for if upper case else
-        //          EATS ANOTHER PIECE, THEN TAKES THE DIAGONAL
-        //          final_move.append("pawn");
-        //          pgnParserRow(a[2]);
-        //          pgnParserColumn(a[3]);
-        //     }
-        //     else {
-        //     pgnParserPieces(a[1]);
-        //     HANDLES WHERE THE PIECE WAS BEFORE(MAKE ANOTHER FUNCTION) 
-        //     pgnParserRow(a[2]);
-        //     pgnParserColumn(a[3]);
-        //     }
-        // }
+        else if (isupper(a[0]) && a[1] != 'x' && isalpha(a[1])) {
+            // final_move.append("pawn");
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+        }
+        else if (islower(a[0])) {
+                 final_move.append("pawn");
+                 cout<<"pawn"<<endl;
+                 pgnParserRow(a[2]);
+                 pgnParserColumn(a[3]);
+        }
+            // else {
+            // pgnParserPieces(a[1]);
+            // pgnParserRow(a[2]);
+            // pgnParserColumn(a[3]);
+            // }
     }
     // 5 chars either for pawn promoting and check OR
     // 2 of same pieces going to a place with check in mind(rooks,pawns,QQ) OR
     // big pieces overtaking and doing a check
     else if (a.size() == 5){
-        if (a[0] != 'x') {
+        if (a[0] == 'x') {
             // handles both cases
-            pgnParserRow(a[0]);
-            pgnParserColumn(a[1]);
-            pgnParserPieces(a[3]);
+            pgnParserRow(a[1]);
+            pgnParserColumn(a[2]);
+            pgnParserPieces(a[4]);
         }
-        // else {
-        //     if (islower(a[0])) {
-        //         handle en passon case for if upper case else
-        //     }
-         //     else {
-        //     pgnParserPieces(a[1]);
-        //     HANDLES WHERE THE PIECE WAS BEFORE(MAKE ANOTHER FUNCTION) 
-        //     pgnParserRow(a[2]);
-        //     pgnParserColumn(a[3]);
-        //     }
-        // }
+        else if (isupper(a[0]) && a[1] == 'x') {
+            pgnParserPieces(a[0]);
+            pgnParserRow(a[2]);
+            pgnParserColumn(a[3]);
+            pgnParserCheck(a[4]);
+        }
+        else {
+            if (islower(a[0])) {
+                pgnParserPieces(a[3]);
+                pgnParserRow(a[0]);
+                pgnParserColumn(a[1]);
+                pgnParserCheck(a[4]);  
+            }
+            // else {
+            //     pgnParserPieces(a[1]);
+            //     pgnParserRow(a[2]);
+            //     pgnParserColumn(a[3]);
+            // }
+        }
     }
     else if (a.size() == 6) {
         pgnParserRow(a[1]);
@@ -143,7 +157,7 @@ void stringParser(string a, string b){
     }
 }
 
-void pgnParserPieces(char x) {
+void PGN::pgnParserPieces(char x) {
     switch (x) {
         case 'K':
             final_move.append("king");
@@ -170,7 +184,7 @@ void pgnParserPieces(char x) {
             break;
         }
 }
-void pgnParserRow(char y) {
+void PGN::pgnParserRow(char y) {
     switch (y) {
         case 'a':
            final_move.append("1");
@@ -209,7 +223,7 @@ void pgnParserRow(char y) {
             break;
         }
 }
-void pgnParserColumn(char z) {
+void PGN::pgnParserColumn(char z) {
     switch (z) {
         case '1':
             final_move.append("1");
@@ -249,7 +263,7 @@ void pgnParserColumn(char z) {
         }
         /*got to next line and */
 }
-void pgnParserCheck(char w) {
+void PGN::pgnParserCheck(char w) {
     switch (w) {
         case '+':
             final_move.append("1");
