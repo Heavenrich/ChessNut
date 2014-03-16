@@ -39,6 +39,7 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
 
 // set board, is initialized? -> startGame()
 boolean Chess::newGame(short whiteTime, short blackTime) {
+  checkmate = false;
   numMoves = 0;
   setWhosTurn(1);
   lcd->clear();
@@ -227,6 +228,7 @@ void Chess::setRed(boolean on) {
 }
 
 void Chess::loadGame() {
+  checkmate = false;
   resetSetupBoard();
   lcd->clear();
   //memcpy(board, (short[8][8]){
