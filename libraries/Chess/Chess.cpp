@@ -1131,7 +1131,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
           tempPiece = checkBoard[row][col];
           checkBoard[kingRow][kingCol] = 0;
           checkBoard[row][col] = king*kingColour;
-          if (!inCheck(row,col, kingColour, checkBoard), true) {
+          if (!inCheck(row,col, kingColour, checkBoard, true)) {
             checkBoard[kingRow][kingCol] = king*kingColour;
             checkBoard[row][col] = tempPiece;
             return false;
