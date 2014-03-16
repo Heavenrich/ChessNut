@@ -18,7 +18,8 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
   cols(colLetters),
   gridInput(inPins),
   gridOutput(outPins),
-  lcd(lc)
+  lcd(lc),
+  checkmate(false)
 {
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
@@ -148,6 +149,19 @@ short Chess::loop() {
     lcd->print(" wins.");
     leds->turnOff();
     return loop_timeout;
+  }
+  if (checkmate) {
+    setRed(true);
+    lcd->clear();
+    lcd->print("Checkmate!");
+    lcd->setCursor(0, 1);
+    if (whosTurn == 1) {
+      lcd->print("Black");
+    } else {
+      lcd->print("White");
+    }
+    lcd->print(" wins.");
+    leds->turnOff();
   }
   if (enableEndTurn && digitalRead(endTurn)) {
     enableEndTurn = false;
@@ -466,6 +480,10 @@ short Chess::turnEnd() {
     }
     
     boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
+    if (checked && inCheckmate(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard)) {
+      checkmate = true;
+      Serial.println("CHECKMATE!!!");
+    }
     
     lcd->clearLine();
     if (whosTurn < 0) {
@@ -937,7 +955,7 @@ boolean Chess::checkCollisions (short movesToCheck[2][2]) {
 	return true;
 }
 
-boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]) {
+boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8], boolean hypothetical, boolean noKing) {
 	if (checkBoard == NULL) {
     Serial.println("checkBoard is NULL");
     memcpy(checkBoard, board, sizeof(board));
@@ -954,23 +972,28 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 	boolean ownPiece;
 	for (short colDir = -1; colDir < 2; colDir += 2) {
 		for (short rowDir = -1; rowDir < 2; rowDir += 2) {
-      Serial.println("ColDir: " + String(colDir));
-      Serial.println("RowDir: " + String(rowDir));
+      // Serial.println("ColDir: " + String(colDir));
+      // Serial.println("RowDir: " + String(rowDir));
 			col = kingCol + colDir;
 			row = kingRow + rowDir;
 			ownPiece = false;
 			// queen or bishop
-      Serial.println("Queen or Bishop");
+      // Serial.println("Queen or Bishop");
 			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {        
-        Serial.println("Row: " + String(row));
-        Serial.println("Col: " + String(col));
+        // Serial.println("Row: " + String(row));
+        // Serial.println("Col: " + String(col));
 				if (checkBoard[row][col] != 0) {
-          Serial.println("checkBoard: " + String(sign(checkBoard[row][col])));
+          // Serial.println("checkBoard: " + String(sign(checkBoard[row][col])));
 					if (sign(checkBoard[row][col]) == kingColour) {
 						ownPiece = true;
 					} else if (checkBoard[row][col] == -1*queen*kingColour || checkBoard[row][col] == -1*bishop*kingColour){
 						Serial.println("Attacker Found");
+            if (hypothetical) {
+              return true;
+            }
             kingAttackers[victim]++;
+            kingAttackerPosition[0] = row;
+            kingAttackerPosition[1] = col;
 					} else {
             ownPiece = true;
           }
@@ -983,17 +1006,22 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 			row = kingRow + (colDir + -1*rowDir)/2;
 			ownPiece = false;
 			// queen or rook
-      Serial.println("Queen or Rook");
+      // Serial.println("Queen or Rook");
 			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
-        Serial.println("Row: " + String(row));
-        Serial.println("Col: " + String(col));
+        // Serial.println("Row: " + String(row));
+        // Serial.println("Col: " + String(col));
 				if (checkBoard[row][col] != 0) {
           Serial.println("checkBoard: " + String(checkBoard[row][col]));
 					if (sign(checkBoard[row][col]) == kingColour) {
 						ownPiece = true;
 					} else if (checkBoard[row][col] == -1*queen*kingColour || checkBoard[row][col] == -1*rook*kingColour) {
 						Serial.println("Attacker Found");
+            if (hypothetical) {
+              return true;
+            }
             kingAttackers[victim]++;
+            kingAttackerPosition[0] = row;
+            kingAttackerPosition[1] = col;
 					} else {
             ownPiece = true;
           }
@@ -1002,56 +1030,83 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 				row += (colDir + -1*rowDir)/2;
 			}
 			// knight
-      Serial.println("Knight");
+      // Serial.println("Knight");
 			row = kingRow + rowDir;
 			col = kingCol + 2*colDir;
-      Serial.println("Row: " + String(row));
-      Serial.println("Col: " + String(col));
+      // Serial.println("Row: " + String(row));
+      // Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*knight*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("knightVal: " + String(-2*kingColour));
+				// Serial.println("checkBoard: " + String(checkBoard[row][col]));
+        // Serial.println("knightVal: " + String(-2*kingColour));
         Serial.println("Attacker Found");
+        if (hypothetical) {
+          return true;
+        }
         kingAttackers[victim]++;
+        kingAttackerPosition[0] = row;
+        kingAttackerPosition[1] = col;
 			}
 			
 			row = kingRow + 2*rowDir;
 			col = kingCol + colDir;
-      Serial.println("Row: " + String(row));
-      Serial.println("Col: " + String(col));
+      // Serial.println("Row: " + String(row));
+      // Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*knight*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("knightVal: " + String(-2*kingColour));
+				// Serial.println("checkBoard: " + String(checkBoard[row][col]));
+        // Serial.println("knightVal: " + String(-2*kingColour));
         Serial.println("Attacker Found");
+        if (hypothetical) {
+          return true;
+        }
         kingAttackers[victim]++;
+        kingAttackerPosition[0] = row;
+        kingAttackerPosition[1] = col;
 			}
       // king
-      Serial.println("King");
-      col = kingCol + (colDir + rowDir)/2;
-			row = kingRow + (colDir + -1*rowDir)/2;
-      if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("Attacker Found");
-        kingAttackers[victim]++;
-			}
-      
-      col = kingCol + colDir;
-			row = kingRow + rowDir;
-      if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("Attacker Found");
-        kingAttackers[victim]++;
-			}
+      if (!noKing) {
+        // Serial.println("King");
+        col = kingCol + (colDir + rowDir)/2;
+        row = kingRow + (colDir + -1*rowDir)/2;
+        if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
+          // Serial.println("checkBoard: " + String(checkBoard[row][col]));
+          Serial.println("Attacker Found");
+          if (hypothetical) {
+            return true;
+          }
+          kingAttackers[victim]++;
+          kingAttackerPosition[0] = row;
+          kingAttackerPosition[1] = col;
+        }
+        
+        col = kingCol + colDir;
+        row = kingRow + rowDir;
+        if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
+          // Serial.println("checkBoard: " + String(checkBoard[row][col]));
+          Serial.println("Attacker Found");
+          if (hypothetical) {
+            return true;
+          }
+          kingAttackers[victim]++;
+          kingAttackerPosition[0] = row;
+          kingAttackerPosition[1] = col;
+        }
+      }
 		}		
 		// Pawn
-    Serial.println("Pawn");
+    // Serial.println("Pawn");
 		row = kingRow + kingColour;
 		col = kingCol + colDir;    
-    Serial.println("Row: " + String(row));
-    Serial.println("Col: " + String(col));
+    // Serial.println("Row: " + String(row));
+    // Serial.println("Col: " + String(col));
 		if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*pawn*kingColour) {
-			Serial.println("checkBoard: " + String(checkBoard[row][col]));
+			// Serial.println("checkBoard: " + String(checkBoard[row][col]));
       Serial.println("Attacker Found");
+      if (hypothetical) {
+        return true;
+      }
       kingAttackers[victim]++;
+      kingAttackerPosition[0] = row;
+      kingAttackerPosition[1] = col;
 		}
 	}
 
@@ -1063,23 +1118,57 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 }
 
 
-  // boolean inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]) {
-    // short row;
-    // short col;
-    // for (short colDir = -1; colDir < 2; colDir += 2) {
-      // for (short rowDir = -1; rowDir < 2; rowDir += 2) {
-        // col = kingCol + (colDir + rowDir)/2;
-        // row = kingRow + (colDir + -1*rowDir)/2;
-        // if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == 0) {
-          // checkBoard[kingRow][KingCol] = 0;
-          // checkBoard[row][col] = king*kingColour;
-          // if (!inCheck(row,col, kingColour, checkBoard));
-        // }
-      // }
-    // }
+  boolean Chess::inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]) {
+    short row;
+    short col;
+    short tempPiece;
+    Serial.println("Looking for King moves");
+    for (short colDir = -1; colDir < 2; colDir += 2) {
+      for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+        col = kingCol + (colDir + rowDir)/2;
+        row = kingRow + (colDir + -1*rowDir)/2;
+        if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col]*kingColour*-1 >= 0) {
+          tempPiece = checkBoard[row][col];
+          checkBoard[kingRow][kingCol] = 0;
+          checkBoard[row][col] = king*kingColour;
+          if (!inCheck(row,col, kingColour, checkBoard), true) {
+            checkBoard[kingRow][kingCol] = king*kingColour;
+            checkBoard[row][col] = tempPiece;
+            return false;
+          }
+          checkBoard[kingRow][kingCol] = king*kingColour;
+          checkBoard[row][col] = tempPiece;
+        }
+      }
+    }
     
-    // return true;
-  // }
+    Serial.println("Double check checkmate");
+    if (kingAttackers[(kingColour+1)/2] > 1) {
+      return true;
+    }
+    
+    row = kingAttackerPosition[0];
+    col = kingAttackerPosition[1];
+    
+    Serial.println("searching for blockers");
+    if (checkBoard[row][col] == -1*knight*kingColour) {
+      if (inCheck(row, col, -1*kingColour, checkBoard, true, true)) {
+        return false;
+      }
+    } else {
+      short colDir = sign(kingCol - col);
+      short rowDir = sign(kingRow - row);
+      while (col != kingCol || row != kingRow) {
+        if (inCheck(row, col, kingColour*-1, checkBoard, true, true)) {
+          return false;
+        }
+        col += colDir;
+        row += rowDir;
+      }
+    }
+    
+    return true;
+  }
 
 short Chess::sign(short val) {
   if (val > 0) {
@@ -1160,39 +1249,23 @@ void Chess::setPgnMove() {
         strcat(lastPgnTurn,"");
         break;
     }
-
+    
+    short origin[2];
+    findAmbiguities(reducedMoves[1][1],reducedMoves[1][2], origin);
+    
+    if (origin[1] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[1]));
+    }
+    
+    if (origin[0] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[0]));
+    }
+    
     if (pgn_state >= pgn_take) {
       strcat(lastPgnTurn,"x");
     }
     
-    switch (reducedMoves[1][2]) {
-      case 0:
-        strcat(lastPgnTurn,"a");
-        break;
-      case 1:
-        strcat(lastPgnTurn,"b");
-        break;
-      case 2:
-        strcat(lastPgnTurn,"c");
-        break;
-      case 3:
-        strcat(lastPgnTurn,"d");
-        break;
-      case 4:
-        strcat(lastPgnTurn,"e");
-        break;
-      case 5:
-        strcat(lastPgnTurn,"f");
-        break;
-      case 6:
-        strcat(lastPgnTurn,"g");
-        break;
-      case 7:
-        strcat(lastPgnTurn,"h");
-        break;
-      default:
-        break;
-    }
+    strcat(lastPgnTurn, colToChar(reducedMoves[1][2]));
     
     char column[1] = "";
     strcat(lastPgnTurn, itoa(reducedMoves[1][1] + 1, column, 10));
@@ -1222,7 +1295,11 @@ void Chess::setPgnMove() {
     }
     
     if (kingAttackers[(-1*whosTurn+1)/2] > 0) {
-       strcat(lastPgnTurn,"+");
+      if (checkmate) {
+        strcat(lastPgnTurn, "#");
+      } else {
+        strcat(lastPgnTurn,"+");
+      }
     }
     
     Serial.println(lastPgnTurn);
@@ -1235,36 +1312,21 @@ void Chess::setPgnMove() {
         col = reducedMoves[i][2];
       }
     }
+    
+    short origin[2];
+    findAmbiguities(row, col, origin);
+    
+    if (origin[1] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[1]));
+    }
+    
+    if (origin[0] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[0]));
+    }
+    
     strcat(lastPgnTurn, "x");
     
-    switch (col) {
-      case 0:
-        strcat(lastPgnTurn,"a");
-        break;
-      case 1:
-        strcat(lastPgnTurn,"b");
-        break;
-      case 2:
-        strcat(lastPgnTurn,"c");
-        break;
-      case 3:
-        strcat(lastPgnTurn,"d");
-        break;
-      case 4:
-        strcat(lastPgnTurn,"e");
-        break;
-      case 5:
-        strcat(lastPgnTurn,"f");
-        break;
-      case 6:
-        strcat(lastPgnTurn,"g");
-        break;
-      case 7:
-        strcat(lastPgnTurn,"h");
-        break;
-      default:
-        break;
-    }
+    strcat(lastPgnTurn, colToChar(col));
     
     char column[1] = "";
     strcat(lastPgnTurn, itoa(row + 1, column, 10));
@@ -1295,6 +1357,140 @@ void Chess::setPgnMove() {
   }
 }
 
+void Chess::findAmbiguities(short destRow, short destCol, short* origin) {
+  short piece = board[destRow][destCol];
+  short turn = sign(piece);
+  
+  origin[0] = -1;
+  origin[1] = -1;
+  
+  short startRow = reducedMoves[0][1];
+  short startCol = reducedMoves[0][2];
+  
+  switch (turn*piece) {
+    boolean blockingPiece;
+    short row;
+    short col;
+    case 1: // pawn
+      if (startCol - destCol != 0) {
+        if (board[startRow][destCol-(startCol-destCol)] == piece) {
+          origin[1] = startCol;
+        }
+      }
+      break;
+    case 2: // knight
+      for (short colDir = -1; colDir < 2; colDir += 2) {
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          row = destRow + rowDir;
+          col = destCol + 2*colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            if (col == startCol) {
+              origin[0] = startRow;
+            } else {
+              origin[1] = startCol;
+            }
+          }
+          
+          row = destRow + 2*rowDir;
+          col = destCol + colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            if (col == startCol) {
+              origin[0] = startRow;
+            } else {
+              origin[1] = startCol;
+            }
+          }
+        }
+      }
+      break;
+    case 3: // bishop
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + colDir;
+          row = destRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    case 4: // rook
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + (colDir + rowDir)/2;
+          row = destRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+        }
+      }
+      break;
+    case 5: // queen
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + (colDir + rowDir)/2;
+          row = destRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+          
+          col = destCol + colDir;
+          row = destRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short fromRow, short fromCol) {
   short col;
 	short row;
@@ -1315,16 +1511,23 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
     short col;
     case 1: // pawn
       if (board[attackRow][attackCol] == 0) {
-        for (short rowDir = 1; rowDir < 3; rowDir++) {
-          row = attackRow - rowDir * whosTurn;
-          col = attackCol;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0) {
-            if (board[row][col] == piece) {
+        if (board[attackRow-turn][attackCol] == -1*whosTurn) {
+          for (short passantCol = attackCol - 1; passantCol < attackCol + 2; passantCol += 2) {
+            if (board[attackRow-turn][passantCol] == piece) {              
+              board[attackRow][attackCol] = piece;
+              board[attackRow-turn][attackCol] = 0;
+              board[attackRow-turn][passantCol] = 0;
+            }
+          }
+          
+        } else {
+          for (short rowDir = 1; rowDir < 3; rowDir++) {
+            row = attackRow - rowDir * turn;
+            col = attackCol;
+            if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
               return true;
-            } else if (board[row][col] != 0) {
-              return false;
             }
           }
         }
@@ -1542,4 +1745,27 @@ void Chess::setWhosTurn(short s) {
     whosTurn = 1;
   }
   leds->lightWhosTurn(whosTurn);
+}
+
+char* Chess::colToChar(short col) {
+  switch (col) {
+      case 0:
+        return "a";
+      case 1:
+        return "b";
+      case 2:
+        return "c";
+      case 3:
+        return "d";
+      case 4:
+        return "e";
+      case 5:
+        return "f";
+      case 6:
+        return "g";
+      case 7:
+        return "h";
+      default:
+        return "";
+    }
 }
