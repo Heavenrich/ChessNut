@@ -1515,7 +1515,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
       if (board[attackRow][attackCol] == 0) {
         if (board[attackRow-whosTurn][attackCol] == -1*whosTurn) {
           for (short passantCol = attackCol - 1; passantCol < attackCol + 2; passantCol += 2) {
-            if (board[attackRow-whosTurn][passantCol] == piece) {
+            if ( && (fromCol < 0 || passantCol == fromCol) && board[attackRow-whosTurn][passantCol] == piece) {
               board[attackRow][attackCol] = piece;
               board[attackRow-whosTurn][attackCol] = 0;
               board[attackRow-whosTurn][passantCol] = 0;
@@ -1539,7 +1539,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           col = attackCol + colDir;
           if (
             row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece
-            && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol))
+            && (fromCol < 0 || col == fromCol))
           {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
