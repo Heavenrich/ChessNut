@@ -1495,7 +1495,6 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
   short col;
 	short row;
   piece *= whosTurn;
-  Serial.println("moveAttacker attackRow: " + String(attackRow) + " attackCol: " + String(attackCol) + " piece: " + String(piece) + " fromRow: " + String(fromRow) + " fromCol: " + String(fromCol));
 
   if (fromRow >= 0 && fromCol >= 0) {
     if (board[fromRow][fromCol] == piece) {

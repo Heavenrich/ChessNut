@@ -89,7 +89,6 @@ boolean PGN::stringParser(String a) {
   }
 
   for (short i = a.length() - 1; i >= 0; i--) {
-    Serial.println("stringParser loop: " + String(i) + " = " + a[i]);
     if (boardList[7] == notChecked) {
       if (a[i] == '+') {
         boardList[7] = 1;
@@ -172,8 +171,11 @@ boolean PGN::stringParser(String a) {
       return false;
     }
   }
+  Serial.print("boardList = {");
+  String prefix = "";
   for (short i = 0; i < 8; i++) {
-    Serial.println("boardList[" + String(i) + "] = " + String(boardList[i]));
+    Serial.print(prefix + String(boardList[i]));
+    prefix = ", ";
   }
   return true;
 }
