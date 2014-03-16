@@ -19,7 +19,7 @@ Chess::Chess(short d, short end, short red, Lcd *lc, Leds *led, char colLetters[
   gridInput(inPins),
   gridOutput(outPins),
   lcd(lc),
-  checkMate(false)
+  checkmate(false)
 {
   castlingDepartures[castlingKing][0] = 4;
   castlingDepartures[castlingKing][1] = 7;
@@ -465,7 +465,7 @@ short Chess::turnEnd() {
     }
     
     boolean checked = inCheck(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard);
-    if (checked && inCheckmate(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard) {
+    if (checked && inCheckmate(kingPositions[(whosTurn+2)%3][0], kingPositions[(whosTurn+2)%3][1], -1*whosTurn, checkBoard)) {
       checkmate = true;
       Serial.println("CHECKMATE!!!");
     }
@@ -1130,15 +1130,15 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
     row = kingAttackerPosition[0];
     col = kingAttackerPosition[1];
     
-    if (checkBoard[row][col] == knight*kingColour*-1) {
-      if (inCheck(row, col, kingColour*-1, true, true)) {
+    if (checkBoard[row][col] == -1*knight*kingColour) {
+      if (inCheck(row, col, -1*kingColour, checkBoard, true, true)) {
         return false;
       }
     } else {
       short colDir = sign(kingCol - col);
       short rowDir = sign(kingRow - row);
       while (col != kingCol || row != kingRow) {
-        if (inCheck(row, col, kingColour*-1, true, true)) {
+        if (inCheck(row, col, kingColour*-1, checkBoard, true, true)) {
           return false;
         }
         col += colDir;
