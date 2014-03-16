@@ -1029,7 +1029,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
           }
 				}
 				col += (colDir + rowDir)/2;
-				row += (colDir + -1*rowDir)/2;
+				row += (rowDir + -1*rowDir)/2;
 			}
 			// knight
       // Serial.println("Knight");
