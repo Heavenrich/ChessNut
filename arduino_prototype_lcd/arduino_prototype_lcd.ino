@@ -21,8 +21,8 @@ short gridInput[8] = {
 short gridOutput[8] = {
   36,37,38,39,40,41,42,43
 };
-short ledControl[7] = {
-  44,45,46,47,48,49,7
+short ledControl[8] = {
+  44,45,46,47,48,49,7,6
 }; //A-C for row, A-C for column, input voltage
 
 short nRows = 8;
@@ -47,6 +47,7 @@ Chess chess(delayRead, endTurn, redLed, &lcd, &leds, cols, gridInput, gridOutput
 Promotion promotion(up, down, endTurn, &lcd);
 ClockMenu clockMenu(up, down, endTurn, &lcd);
 ClockTimer clockTimer(up, down, endTurn, &lcd);
+PGN pgn;
 
 // for controlling loop()
 #define IDLE 0
@@ -81,7 +82,7 @@ void setup() {
   state = IDLE;
   
   //turn off LEDs if applicable
-  for(short i = 0; i < 7; i++) {
+  for(short i = 0; i < 8; i++) {
     pinMode(ledControl[i], OUTPUT);
     digitalWrite(ledControl[i], LOW);
   }
@@ -172,23 +173,23 @@ void loop() {
     strcat(ret, ".pgn");
     memcpy(chess.fileName, ret, sizeof(chess.fileName));
     Serial.println(ret);
-    PGN pgn(ret);
+    pgn.setFile(ret);
     chess.initializeBoard();
     chess.debugCurrentBoard();
-    for (short i=0; i < pgn.movesCount; i++) {
-      if (pgn.boardList[i][3] == -2 && pgn.boardList[i][4] == -2) {
-        chess.movePromotion(pgn.boardList[i][1], pgn.boardList[i][2]);
-      } else if (pgn.boardList[i][0] == -1 && pgn.boardList[i][1] == -1) {
-        chess.whosTurn = -2*(i%2)+1;
+    while (pgn.readFile()) {
+      if (pgn.boardList[3] == -2 && pgn.boardList[4] == -2) {
+        chess.movePromotion(pgn.boardList[1], pgn.boardList[2]);
+      } else if (pgn.boardList[0] == -1 && pgn.boardList[1] == -1) {
+        chess.whosTurn = 2*(pgn.movesCount%2)-1;
         chess.moveCastle(true);
-      } else if (pgn.boardList[i][0] == -2 && pgn.boardList[i][1] == -2) {
-        chess.whosTurn = -2*(i%2)+1;
+      } else if (pgn.boardList[0] == -2 && pgn.boardList[1] == -2) {
+        chess.whosTurn = 2*(pgn.movesCount%2)-1;
         chess.moveCastle(false);
       }
-      chess.moveAttacker(pgn.boardList[i][0],pgn.boardList[i][1], pgn.boardList[i][2], pgn.boardList[i][3], pgn.boardList[i][4]);
+      chess.moveAttacker(pgn.boardList[0],pgn.boardList[1], pgn.boardList[2], pgn.boardList[3], pgn.boardList[4]);
       chess.debugCurrentBoard();
     }
-    
+    pgn.closeFile();
     chess.numTurns = pgn.movesCount/2;
     chess.whosTurn = -2*(pgn.movesCount%2)+1;
     

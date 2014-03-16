@@ -13,6 +13,7 @@ class Leds {
     
   private:
     boolean flipLEDs(boolean flip = true, boolean input = true);
+    void setInput(boolean isColumn, boolean input);
     void setLED(boolean isColumn, short index);
     
     short *ledControl;

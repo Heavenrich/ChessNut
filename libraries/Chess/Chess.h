@@ -65,7 +65,7 @@ class Chess {
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove();
-    void setWhosTurn(boolean whosTurn);
+    void setWhosTurn(short whosTurn);
     
     Clock clock;
     

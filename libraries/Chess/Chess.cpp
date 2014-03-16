@@ -154,17 +154,17 @@ short Chess::loop() {
     pgn_state = turnEnd();
     if (pgn_state >= 0) {
       numMoves = 0;
-      if (whosTurn == 1) {
-        numTurns++;
-      }
       if (pgn_state % pgn_take == pgn_promotion) {
         Serial.println("promotion");
         return loop_promotion;
       } else {
         setPgnMove();
+        if (whosTurn == 1) {
+          numTurns++;
+        }
         Serial.println("endTurn");
         clock.loop(whosTurn);
-        setWhosTurn(whosTurn * -1);
+        setWhosTurn(whosTurn * (-1));
         return loop_endTurn;
       }
     }
@@ -204,7 +204,7 @@ void Chess::setPromotedPiece(short piece) {
   clock.loop(whosTurn);
   board[reducedMoves[1][1]][reducedMoves[1][2]] = whosTurn * piece;
   setPgnMove();
-  setWhosTurn(whosTurn * -1);
+  setWhosTurn(whosTurn * (-1));
 }
 
 // set the red led
@@ -213,7 +213,8 @@ void Chess::setRed(boolean on) {
 }
 
 void Chess::loadGame() {
-  //resetSetupBoard();
+  resetSetupBoard();
+  lcd->clear();
   //memcpy(board, (short[8][8]){
   //    {0, 0, 0, 0, 0, 0, 0, 0},
   //    {rook, knight, bishop, queen, king, bishop, knight, rook},
@@ -297,8 +298,8 @@ boolean Chess::setupBoard() {
 void Chess::resetSetupBoard() {
   setupPosition[0] = -1;
   setupPosition[1] = -1;
-  setupPosition[0] = -1;
-  setupPosition[1] = -1;
+  setPosition[0] = -1;
+  setPosition[1] = -1;
   forceLoadSelect = true;
   enableEndTurn = false;
 }
@@ -479,6 +480,18 @@ short Chess::turnEnd() {
     lcd->print(" to ");
     lcd->print(cols[reducedMoves[1][2]]);
     lcd->print(reducedMoves[1][1]+1);
+
+    short edgeCase = pgn_normal;
+    if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
+      edgeCase = pgn_take;
+    }
+    if (
+      reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
+      && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
+    ) {
+      edgeCase += pgn_promotion;
+    }
+
     board[reducedMoves[1][1]][reducedMoves[1][2]] = board[reducedMoves[0][1]][reducedMoves[0][2]];
     board[reducedMoves[0][1]][reducedMoves[0][2]] = 0;
     if (checked) {
@@ -491,16 +504,7 @@ short Chess::turnEnd() {
     }
     
     setRed(false);
-    short edgeCase = pgn_normal;
-    if (board[reducedMoves[1][1]][reducedMoves[1][2]] != 0) {
-      edgeCase = pgn_take;
-    }
-    if (
-      reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
-      && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
-    ) {
-      edgeCase += pgn_promotion;
-    }
+    Serial.println("edgeCase: " + String(edgeCase));
     return edgeCase;
   } 
   else if (numReducedMoves == 3) {
@@ -1135,7 +1139,7 @@ void Chess::setPgnMove() {
   } else if (pgn_state == pgn_castleQueen) {
     strcat(lastPgnTurn,"O-O-O");
   } else if (numReducedMoves == 2) {
-    switch (board[reducedMoves[0][1]][reducedMoves[0][2]]*whosTurn) {
+    switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
       case 2:
         strcat(lastPgnTurn,"N");
         break;
