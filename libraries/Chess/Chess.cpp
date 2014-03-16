@@ -1248,39 +1248,23 @@ void Chess::setPgnMove() {
         strcat(lastPgnTurn,"");
         break;
     }
-
+    
+    short origin[2];
+    findAmbiguities(reducedMoves[1][1],reducedMoves[1][2], origin);
+    
+    if (origin[1] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[1]));
+    }
+    
+    if (origin[0] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[0]));
+    }
+    
     if (pgn_state >= pgn_take) {
       strcat(lastPgnTurn,"x");
     }
     
-    switch (reducedMoves[1][2]) {
-      case 0:
-        strcat(lastPgnTurn,"a");
-        break;
-      case 1:
-        strcat(lastPgnTurn,"b");
-        break;
-      case 2:
-        strcat(lastPgnTurn,"c");
-        break;
-      case 3:
-        strcat(lastPgnTurn,"d");
-        break;
-      case 4:
-        strcat(lastPgnTurn,"e");
-        break;
-      case 5:
-        strcat(lastPgnTurn,"f");
-        break;
-      case 6:
-        strcat(lastPgnTurn,"g");
-        break;
-      case 7:
-        strcat(lastPgnTurn,"h");
-        break;
-      default:
-        break;
-    }
+    strcat(lastPgnTurn, colToChar(reducedMoves[1][2]));
     
     char column[1] = "";
     strcat(lastPgnTurn, itoa(reducedMoves[1][1] + 1, column, 10));
@@ -1327,36 +1311,21 @@ void Chess::setPgnMove() {
         col = reducedMoves[i][2];
       }
     }
+    
+    short origin[2];
+    findAmbiguities(row, col, origin);
+    
+    if (origin[1] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[1]));
+    }
+    
+    if (origin[0] != -1) {
+      strcat(lastPgnTurn, colToChar(origin[0]));
+    }
+    
     strcat(lastPgnTurn, "x");
     
-    switch (col) {
-      case 0:
-        strcat(lastPgnTurn,"a");
-        break;
-      case 1:
-        strcat(lastPgnTurn,"b");
-        break;
-      case 2:
-        strcat(lastPgnTurn,"c");
-        break;
-      case 3:
-        strcat(lastPgnTurn,"d");
-        break;
-      case 4:
-        strcat(lastPgnTurn,"e");
-        break;
-      case 5:
-        strcat(lastPgnTurn,"f");
-        break;
-      case 6:
-        strcat(lastPgnTurn,"g");
-        break;
-      case 7:
-        strcat(lastPgnTurn,"h");
-        break;
-      default:
-        break;
-    }
+    strcat(lastPgnTurn, colToChar(col));
     
     char column[1] = "";
     strcat(lastPgnTurn, itoa(row + 1, column, 10));
@@ -1387,6 +1356,140 @@ void Chess::setPgnMove() {
   }
 }
 
+void Chess::findAmbiguities(short destRow, short destCol, short* origin) {
+  short piece = board[destRow][destCol];
+  short turn = sign(piece);
+  
+  origin[0] = -1;
+  origin[1] = -1;
+  
+  short startRow = reducedMoves[0][1];
+  short startCol = reducedMoves[0][2];
+  
+  switch (turn*piece) {
+    boolean blockingPiece;
+    short row;
+    short col;
+    case 1: // pawn
+      if (startCol - destCol != 0) {
+        if (board[startRow][destCol-(startCol-destCol)] == piece) {
+          origin[1] = startCol;
+        }
+      }
+      break;
+    case 2: // knight
+      for (short colDir = -1; colDir < 2; colDir += 2) {
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          row = destRow + rowDir;
+          col = destCol + 2*colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            if (col == startCol) {
+              origin[0] = startRow;
+            } else {
+              origin[1] = startCol;
+            }
+          }
+          
+          row = destRow + 2*rowDir;
+          col = destCol + colDir;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+            if (col == startCol) {
+              origin[0] = startRow;
+            } else {
+              origin[1] = startCol;
+            }
+          }
+        }
+      }
+      break;
+    case 3: // bishop
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + colDir;
+          row = destRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    case 4: // rook
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + (colDir + rowDir)/2;
+          row = destRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+        }
+      }
+      break;
+    case 5: // queen
+      for (short colDir = -1; colDir < 2; colDir += 2) { 
+        for (short rowDir = -1; rowDir < 2; rowDir += 2) {
+          col = destCol + (colDir + rowDir)/2;
+          row = destRow + (colDir + -1*rowDir)/2;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            } else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += (colDir + rowDir)/2;
+            row += (colDir + -1*rowDir)/2;
+          }
+          
+          col = destCol + colDir;
+          row = destRow + rowDir;
+          blockingPiece = false;
+          while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
+            if (board[row][col] == piece) {
+              if (col == startCol) {
+                origin[0] = startRow;
+              } else {
+                origin[1] = startCol;
+              }
+            }  else if (board[row][col] != 0) {
+              blockingPiece = true;
+            }
+            col += colDir;
+            row += rowDir;
+          }
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short fromRow, short fromCol) {
   short col;
 	short row;
@@ -1407,13 +1510,24 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
     short col;
     case 1: // pawn
       if (board[attackRow][attackCol] == 0) {
-        for (short rowDir = 1; rowDir < 3; rowDir++) {
-          row = attackRow - rowDir * turn;
-          col = attackCol;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
-            board[row][col] = 0;
-            board[attackRow][attackCol] = piece;
-            return true;
+        if (board[attackRow-turn][attackCol] == -1*turn) {
+          for (short passantCol = attackCol - 1; passantCol < attackCol + 2; passantCol += 2) {
+            if (board[attackRow-turn][passantCol] == piece) {              
+              board[attackRow][attackCol] = piece;
+              board[attackRow-turn][attackCol] = 0;
+              board[attackRow-turn][passantCol] = 0;
+            }
+          }
+          
+        } else {
+          for (short rowDir = 1; rowDir < 3; rowDir++) {
+            row = attackRow - rowDir * turn;
+            col = attackCol;
+            if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return true;
+            }
           }
         }
       } else {
@@ -1609,4 +1723,27 @@ void Chess::setWhosTurn(short s) {
     whosTurn = 1;
   }
   leds->lightWhosTurn(whosTurn);
+}
+
+char* Chess::colToChar(short col) {
+  switch (col) {
+      case 0:
+        return "a";
+      case 1:
+        return "b";
+      case 2:
+        return "c";
+      case 3:
+        return "d";
+      case 4:
+        return "e";
+      case 5:
+        return "f";
+      case 6:
+        return "g";
+      case 7:
+        return "h";
+      default:
+        return "";
+    }
 }

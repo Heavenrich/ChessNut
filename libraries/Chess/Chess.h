@@ -67,7 +67,8 @@ class Chess {
     void setPgnMove();
     void setWhosTurn(short whosTurn);
     boolean inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
-    
+    void findAmbiguities(short destRow, short destCol, short* origin);
+    char* colToChar(short col);
     Clock clock;
     
     boolean checkmate;
