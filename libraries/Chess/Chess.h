@@ -27,7 +27,7 @@ class Chess {
     void debugCurrentBoard();
     boolean moveCastle(boolean kingSide);
     void initializeBoard();
-    boolean movePromotion(short attackCol, short piece);
+    boolean movePromotion(short attackCol, short piece, short fromRow = -1, short fromCo = -1);
     boolean moveEnpassant(short attackRow, short attackCol);
 
 

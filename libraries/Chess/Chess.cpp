@@ -291,6 +291,7 @@ boolean Chess::setupBoard() {
 
   resetSetupBoard();
   leds->turnOff();
+  setWhosTurn(whosTurn);
   memcpy(prevScan, currScan, sizeof(prevScan));
   return true;
 }
@@ -1297,9 +1298,9 @@ void Chess::setPgnMove() {
 boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short fromRow, short fromCol) {
   short col;
 	short row;
-  short turn = sign(piece);
+  piece *= whosTurn;
 
-  if (fromRow > 0 && fromCol > 0) {
+  if (fromRow >= 0 && fromCol >= 0) {
     if (board[fromRow][fromCol] == piece) {
       board[fromRow][fromCol] = 0;
       board[attackRow][attackCol] = piece;
@@ -1308,31 +1309,39 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
     return false;
   }
   
-  switch (turn*piece) {
+  switch (piece) {
     boolean blockingPiece;
     short row;
     short col;
     case 1: // pawn
       if (board[attackRow][attackCol] == 0) {
         for (short rowDir = 1; rowDir < 3; rowDir++) {
-          row = attackRow - rowDir * turn;
+          row = attackRow - rowDir * whosTurn;
           col = attackCol;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
-            board[row][col] = 0;
-            board[attackRow][attackCol] = piece;
-            return true;
+          if (row < 8 && row >= 0 && col < 8 && col >= 0) {
+            if (board[row][col] == piece) {
+              board[row][col] = 0;
+              board[attackRow][attackCol] = piece;
+              return true;
+            } else if (board[row][col] != 0) {
+              return false;
+            }
           }
         }
       } else {
         for (short colDir = -1; colDir < 2; colDir += 2) {
-          row = attackRow - turn;
+          row = attackRow - whosTurn;
           col = attackCol + colDir;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+          if (
+            row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece
+            && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol))
+          {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
             return true;
           }
         }
+        return false;
       }
       break;
     case 2: // knight
@@ -1340,7 +1349,10 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
         for (short rowDir = -1; rowDir < 2; rowDir += 2) {
           row = attackRow + rowDir;
           col = attackCol + 2*colDir;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+          if (
+            row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece
+            && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol)
+          ) {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
             return true;
@@ -1348,7 +1360,10 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           
           row = attackRow + 2*rowDir;
           col = attackCol + colDir;
-          if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
+          if (
+            row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece
+            && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol))
+          {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
             return true;
@@ -1363,7 +1378,10 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           row = attackRow + rowDir;
           blockingPiece = false;
           while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
-            if (board[row][col] == piece) {
+            if (
+              board[row][col] == piece
+              && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol)
+            ) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
               Serial.println("found bishop");
@@ -1385,7 +1403,10 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           row = attackRow + (colDir + -1*rowDir)/2;
           blockingPiece = false;
           while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
-            if (board[row][col] == piece) {
+            if (
+              board[row][col] == piece
+              && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol)
+            ) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
               return true;
@@ -1405,7 +1426,10 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           row = attackRow + (colDir + -1*rowDir)/2;
           blockingPiece = false;
           while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
-            if (board[row][col] == piece) {
+            if (
+              board[row][col] == piece
+              && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol)
+            ) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
               return true;
@@ -1420,7 +1444,9 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           row = attackRow + rowDir;
           blockingPiece = false;
           while (col >= 0 && col < 8 && row >= 0 && row < 8 && !blockingPiece) {
-            if (board[row][col] == piece) {
+            if (
+              board[row][col] == piece
+              && (fromRow < 0 || row == fromRow) && (fromCol < 0 || col == fromCol)) {
               board[row][col] = 0;
               board[attackRow][attackCol] = piece;
               return true;
@@ -1485,13 +1511,13 @@ boolean Chess::moveCastle(boolean kingSide) {
   return false;
 }
 
-boolean Chess::movePromotion(short attackCol, short piece) {
+boolean Chess::movePromotion(short attackCol, short piece, short fromRow, short fromCol) {
   short attackRow = 0;
-  if (sign(piece) == 1) {
+  if (whosTurn == 1) {
     attackRow = 7;
   }
-  if (moveAttacker(attackRow, attackCol, whosTurn * pawn)) {
-    board[attackRow][attackCol] = piece;
+  if (moveAttacker(attackRow, attackCol, pawn, fromRow, fromCol)) {
+    board[attackRow][attackCol] = whosTurn * piece;
     return true;
   }
   return false;

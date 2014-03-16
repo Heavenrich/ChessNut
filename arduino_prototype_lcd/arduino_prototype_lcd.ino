@@ -176,17 +176,16 @@ void loop() {
     pgn.setFile(ret);
     chess.initializeBoard();
     chess.debugCurrentBoard();
+    chess.whosTurn = -1;
     while (pgn.readFile()) {
-      if (pgn.boardList[3] == -2 && pgn.boardList[4] == -2) {
-        chess.movePromotion(pgn.boardList[1], pgn.boardList[2]);
-      } else if (pgn.boardList[0] == -1 && pgn.boardList[1] == -1) {
-        chess.whosTurn = 2*(pgn.movesCount%2)-1;
-        chess.moveCastle(true);
-      } else if (pgn.boardList[0] == -2 && pgn.boardList[1] == -2) {
-        chess.whosTurn = 2*(pgn.movesCount%2)-1;
-        chess.moveCastle(false);
+      chess.whosTurn *= -1;
+      if (pgn.castle) {
+        chess.moveCastle(pgn.castleKingSide);
+      } else if (pgn.boardList[6] != PGN::notUsed) {
+        chess.movePromotion(pgn.boardList[1], pgn.boardList[6], pgn.boardList[5], pgn.boardList[4]);
+      } else {
+        chess.moveAttacker(pgn.boardList[2], pgn.boardList[1], pgn.boardList[0], pgn.boardList[5], pgn.boardList[4]);
       }
-      chess.moveAttacker(pgn.boardList[0],pgn.boardList[1], pgn.boardList[2], pgn.boardList[3], pgn.boardList[4]);
       chess.debugCurrentBoard();
     }
     pgn.closeFile();
