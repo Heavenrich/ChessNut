@@ -1495,6 +1495,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
   short col;
 	short row;
   piece *= whosTurn;
+  Serial.println("moveAttacker attackRow: " + String(attackRow) + " attackCol: " + String(attackCol) + " piece: " + String(piece) + " fromRow: " + String(fromRow) + " fromCol: " + String(fromCol));
 
   if (fromRow >= 0 && fromCol >= 0) {
     if (board[fromRow][fromCol] == piece) {
@@ -1505,24 +1506,24 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
     return false;
   }
   
-  switch (piece) {
+  switch (abs(piece)) {
     boolean blockingPiece;
     short row;
     short col;
     case 1: // pawn
       if (board[attackRow][attackCol] == 0) {
-        if (board[attackRow-turn][attackCol] == -1*whosTurn) {
+        if (board[attackRow-whosTurn][attackCol] == -1*whosTurn) {
           for (short passantCol = attackCol - 1; passantCol < attackCol + 2; passantCol += 2) {
-            if (board[attackRow-turn][passantCol] == piece) {              
+            if (board[attackRow-whosTurn][passantCol] == piece) {
               board[attackRow][attackCol] = piece;
-              board[attackRow-turn][attackCol] = 0;
-              board[attackRow-turn][passantCol] = 0;
+              board[attackRow-whosTurn][attackCol] = 0;
+              board[attackRow-whosTurn][passantCol] = 0;
             }
           }
           
         } else {
           for (short rowDir = 1; rowDir < 3; rowDir++) {
-            row = attackRow - rowDir * turn;
+            row = attackRow - rowDir * whosTurn;
             col = attackCol;
             if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
               board[row][col] = 0;

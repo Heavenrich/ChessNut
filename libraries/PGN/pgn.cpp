@@ -69,6 +69,8 @@ boolean PGN::readFile() {
         }
         movesCount++;
         return parserOK;
+      } else {
+        move = "";
       }
     }
   }
@@ -82,47 +84,34 @@ void PGN::closeFile() {
 }
 
 boolean PGN::stringParser(String a) {
-  for (short i = 0; i < 7; i++) {
+  for (short i = 0; i < 8; i++) {
     boardList[i] = notChecked;
   }
 
-  for (short i = 0; i < a.length(); i++) {
-    if (boardList[0] == notChecked) {
-      if (a[i] > ASCII_A_UPPER && a[i] < ASCII_Z_UPPER) {
-        boardList[0] = pgnParserPieces(a[0]);
+  for (short i = a.length() - 1; i >= 0; i--) {
+    Serial.println("stringParser loop: " + String(i) + " = " + a[i]);
+    if (boardList[7] == notChecked) {
+      if (a[i] == '+') {
+        boardList[7] = 1;
+      } else if (a[i] == '#') {
+        boardList[7] = 2;
       } else {
-        boardList[0] = pgnParserPieces('P');
+        i++;
+        boardList[7] = notUsed;
       }
-    } else if (boardList[1] == notChecked || boardList[2] == notChecked) {
-      if (boardList[1] == notChecked) {
-        if (a[i] >= ASCII_A_LOWER && a[i] <= ASCII_H_LOWER) {
-          boardList[1] = a[i] - ASCII_A_LOWER;
+    } else if (boardList[6] == notChecked) {
+      if (a[i - 1] == '=') {
+        if (a[i] >= ASCII_A_UPPER && a[i] <= ASCII_A_LOWER) {
+          boardList[6] = pgnParserPieces(a[i]);
         } else {
-          boardList[1] = notUsed;
-          if (a[i] >= ASCII_1 && a[i] <= ASCII_8) {
-            boardList[2] = a[i] - ASCII_1;
-          }
+          boardList[6] = notUsed;
+          Serial.println("String parser failed: didn't get piece for promotion");
+          return false;
         }
-      } else if (boardList[2] == notChecked) {
-        if (a[i] >= ASCII_1 && a[i] <= ASCII_8) {
-          boardList[2] = a[i] - ASCII_1;
-        } else {
-          boardList[2] = notUsed;
-        }
-      }
-    } else if (boardList[3] == notChecked) {
-      if (a[i] == 'x') {
-        boardList[3] = 1;
+        i--;
       } else {
-        boardList[3] = notUsed;
-      }
-    } else if (boardList[4] == notChecked) {
-      if (a[i] >= ASCII_A_LOWER && a[i] <= ASCII_H_LOWER) {
-        boardList[4] = a[i] - ASCII_A_LOWER;
-      } else {
-        boardList[4] = notUsed;
-        Serial.println("String parser failed: didn't get destination letter");
-        return false;
+        i++;
+        boardList[6] = notUsed;
       }
     } else if (boardList[5] == notChecked) {
       if (a[i] >= ASCII_1 && a[i] <= ASCII_8) {
@@ -132,36 +121,59 @@ boolean PGN::stringParser(String a) {
         Serial.println("String parser failed: didn't get destination number");
         return false;
       }
-    } else if (boardList[6] == notChecked) {
-      if (a[i] = '=') {
+    } else if (boardList[4] == notChecked) {
+      if (a[i] >= ASCII_A_LOWER && a[i] <= ASCII_H_LOWER) {
+        boardList[4] = a[i] - ASCII_A_LOWER;
+      } else {
+        boardList[4] = notUsed;
+        Serial.println("String parser failed: didn't get destination letter");
+        return false;
+      }
+    } else if (boardList[3] == notChecked) {
+      if (a[i] == 'x') {
+        boardList[3] = 1;
+      } else {
+        boardList[3] = notUsed;
         i++;
-        if (a[i] >= ASCII_A_UPPER && a[i] <= ASCII_A_LOWER) {
-          boardList[6] = pgnParserPieces(a[i]);
-        } else {
-          boardList[6] = notUsed;
-          Serial.println("String parser failed: didn't get piece for promotion");
-          return false;
-        }
-      } else {
-        boardList[6] = notUsed;
       }
-    } else if (boardList[7] == notChecked) {
-      if (a[i] == '+') {
-        boardList[7] = 1;
-      } else if (a[i] == '#') {
-        boardList[7] = 2;
+    } else if (boardList[2] == notChecked) {
+      if (a[i] >= ASCII_1 && a[i] <= ASCII_8) {
+        boardList[2] = a[i] - ASCII_1;
       } else {
-        boardList[7] = notUsed;
+        boardList[2] = notUsed;
+        i++;
       }
-    } else {
+    } else if (boardList[1] == notChecked) {
+      if (a[i] >= ASCII_A_LOWER && a[i] <= ASCII_H_LOWER) {
+        boardList[1] = a[i] - ASCII_A_LOWER;
+      } else {
+        boardList[1] = notUsed;
+        i++;
+      }
+    } else if (boardList[0] == notChecked) {
+      if (a[i] > ASCII_A_UPPER && a[i] < ASCII_Z_UPPER) {
+        boardList[0] = pgnParserPieces(a[0]);
+      } else {
+        boardList[0] = pgnParserPieces('P');
+        i++;
+      }
+    }
+    else {
       Serial.println("String parser failed: ran over our array");
       return false;
     }
   }
-  for (short i = 0; i < 8; i++) {
+  if (boardList[0] == notChecked) {
+    boardList[0] = pgnParserPieces('P');
+  }
+  for (short i = 4; i < 8; i++) {
     if (boardList[i] == notChecked) {
+      Serial.println("boardList[" + String(i) + "] was not tested");
       return false;
     }
+  }
+  for (short i = 0; i < 8; i++) {
+    Serial.println("boardList[" + String(i) + "] = " + String(boardList[i]));
   }
   return true;
 }

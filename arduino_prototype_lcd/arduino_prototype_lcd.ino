@@ -179,18 +179,18 @@ void loop() {
     chess.whosTurn = -1;
     while (pgn.readFile()) {
       chess.whosTurn *= -1;
+      chess.numTurns++;
       if (pgn.castle) {
         chess.moveCastle(pgn.castleKingSide);
       } else if (pgn.boardList[6] != PGN::notUsed) {
-        chess.movePromotion(pgn.boardList[1], pgn.boardList[6], pgn.boardList[5], pgn.boardList[4]);
+        chess.movePromotion(pgn.boardList[4], pgn.boardList[6], pgn.boardList[2], pgn.boardList[1]);
       } else {
-        chess.moveAttacker(pgn.boardList[2], pgn.boardList[1], pgn.boardList[0], pgn.boardList[5], pgn.boardList[4]);
+        chess.moveAttacker(pgn.boardList[5], pgn.boardList[4], pgn.boardList[0], pgn.boardList[2], pgn.boardList[1]);
       }
       chess.debugCurrentBoard();
     }
     pgn.closeFile();
-    chess.numTurns = pgn.movesCount/2;
-    chess.whosTurn = -2*(pgn.movesCount%2)+1;
+    chess.whosTurn *= -1;
     
     Serial.println("Done recreating pgn");
     
