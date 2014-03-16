@@ -307,6 +307,8 @@ boolean Chess::setupBoard() {
 
   resetSetupBoard();
   leds->turnOff();
+  lcd->clearLine();
+  lcd->print("ready to start!");
   setWhosTurn(whosTurn);
   memcpy(prevScan, currScan, sizeof(prevScan));
   return true;
@@ -508,7 +510,7 @@ short Chess::turnEnd() {
     }
     if (
       reducedMoves[1][1] == (whosTurn + 1) * 7 / 2
-      && abs(board[reducedMoves[1][1]][reducedMoves[1][2]]) == pawn
+      && abs(board[reducedMoves[0][1]][reducedMoves[0][2]]) == pawn
     ) {
       edgeCase += pgn_promotion;
     }
@@ -1231,7 +1233,7 @@ void Chess::setPgnMove() {
   } else if (pgn_state == pgn_castleQueen) {
     strcat(lastPgnTurn,"O-O-O");
   } else if (numReducedMoves == 2) {
-    if (pgn_state % pgn_take == pgn_promotion) {
+    if (pgn_state % pgn_take != pgn_promotion) {
       switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
         case 2:
           strcat(lastPgnTurn,"N");
@@ -1517,7 +1519,7 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
       if (board[attackRow][attackCol] == 0) {
         if (board[attackRow-whosTurn][attackCol] == -1*whosTurn) {
           for (short passantCol = attackCol - 1; passantCol < attackCol + 2; passantCol += 2) {
-            if ( && (fromCol < 0 || passantCol == fromCol) && board[attackRow-whosTurn][passantCol] == piece) {
+            if ((fromCol < 0 || passantCol == fromCol) && board[attackRow-whosTurn][passantCol] == piece) {
               board[attackRow][attackCol] = piece;
               board[attackRow-whosTurn][attackCol] = 0;
               board[attackRow-whosTurn][passantCol] = 0;

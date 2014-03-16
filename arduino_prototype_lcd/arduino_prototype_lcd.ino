@@ -173,6 +173,10 @@ void loop() {
     strcat(ret, ".pgn");
     memcpy(chess.fileName, ret, sizeof(chess.fileName));
     Serial.println(ret);
+    lcd.clear();
+    lcd.print("loading...");
+    lcd.setCursor(10, 0);
+    lcd.blink();
     pgn.setFile(ret);
     chess.initializeBoard();
     chess.debugCurrentBoard();
@@ -189,6 +193,7 @@ void loop() {
       }
       chess.debugCurrentBoard();
     }
+    lcd.noBlink();
     pgn.closeFile();
     chess.whosTurn *= -1;
     
