@@ -59,15 +59,18 @@ class Chess {
     void outputBoard(boolean debug = true); // print up to 10 squares that are activated to lcd
     boolean isValidMove(short piece, short movesToCheck[2][2]);
     boolean checkCollisions (short movesToCheck[2][2]);
-    boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
+    boolean inCheck(short kingRow, short kingCol, short kingColour, short checkBoard[8][8], boolean hypothetical=false, boolean noKing=false);
     short sign(short val);
     boolean isSlide(short down, short row, short col);
     void resetFixes(); // called once before fixBoard
     void fixBoard(String message = "", short lcdRow = 0); // output squares different than board to lcd
     void setPgnMove();
     void setWhosTurn(boolean whosTurn);
+    boolean inCheckmate(short kingRow, short kingCol, short kingColour, short checkBoard[8][8]);
     
     Clock clock;
+    
+    boolean checkmate;
     
     short pgn_state;
     static const short pgn_normal = 0;
@@ -100,6 +103,7 @@ class Chess {
     // Black is 0, White is 1; records number of pieces attacking king
     short kingAttackers[2];
     short kingPositions[2][2];
+    short kingAttackerPosition[2];
 	
     short castlingArrivals[2][2];
     short castlingDepartures[2][2];
