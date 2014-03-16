@@ -1233,7 +1233,7 @@ void Chess::setPgnMove() {
   } else if (pgn_state == pgn_castleQueen) {
     strcat(lastPgnTurn,"O-O-O");
   } else if (numReducedMoves == 2) {
-    if (pgn_state % pgn_take == pgn_promotion) {
+    if (pgn_state % pgn_take != pgn_promotion) {
       switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
         case 2:
           strcat(lastPgnTurn,"N");
