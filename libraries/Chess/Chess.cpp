@@ -1231,25 +1231,27 @@ void Chess::setPgnMove() {
   } else if (pgn_state == pgn_castleQueen) {
     strcat(lastPgnTurn,"O-O-O");
   } else if (numReducedMoves == 2) {
-    switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
-      case 2:
-        strcat(lastPgnTurn,"N");
-        break;
-      case 3:
-        strcat(lastPgnTurn,"B");
-        break;
-      case 4:
-        strcat(lastPgnTurn,"R");
-        break;
-      case 5:
-        strcat(lastPgnTurn,"Q");
-        break;
-      case 6:
-        strcat(lastPgnTurn,"K");
-        break;
-      default:
-        strcat(lastPgnTurn,"");
-        break;
+    if (pgn_state % pgn_take == pgn_promotion) {
+      switch (board[reducedMoves[1][1]][reducedMoves[1][2]]*whosTurn) {
+        case 2:
+          strcat(lastPgnTurn,"N");
+          break;
+        case 3:
+          strcat(lastPgnTurn,"B");
+          break;
+        case 4:
+          strcat(lastPgnTurn,"R");
+          break;
+        case 5:
+          strcat(lastPgnTurn,"Q");
+          break;
+        case 6:
+          strcat(lastPgnTurn,"K");
+          break;
+        default:
+          strcat(lastPgnTurn,"");
+          break;
+      }
     }
     
     short origin[2];
