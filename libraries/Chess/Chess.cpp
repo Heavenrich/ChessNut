@@ -150,6 +150,19 @@ short Chess::loop() {
     leds->turnOff();
     return loop_timeout;
   }
+  if (checkmate) {
+    setRed(true);
+    lcd->clear();
+    lcd->print("Checkmate!");
+    lcd->setCursor(0, 1);
+    if (whosTurn == 1) {
+      lcd->print("Black");
+    } else {
+      lcd->print("White");
+    }
+    lcd->print(" wins.");
+    leds->turnOff();
+  }
   if (enableEndTurn && digitalRead(endTurn)) {
     enableEndTurn = false;
     pgn_state = turnEnd();
@@ -958,18 +971,18 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 	boolean ownPiece;
 	for (short colDir = -1; colDir < 2; colDir += 2) {
 		for (short rowDir = -1; rowDir < 2; rowDir += 2) {
-      Serial.println("ColDir: " + String(colDir));
-      Serial.println("RowDir: " + String(rowDir));
+      // Serial.println("ColDir: " + String(colDir));
+      // Serial.println("RowDir: " + String(rowDir));
 			col = kingCol + colDir;
 			row = kingRow + rowDir;
 			ownPiece = false;
 			// queen or bishop
-      Serial.println("Queen or Bishop");
+      // Serial.println("Queen or Bishop");
 			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {        
-        Serial.println("Row: " + String(row));
-        Serial.println("Col: " + String(col));
+        // Serial.println("Row: " + String(row));
+        // Serial.println("Col: " + String(col));
 				if (checkBoard[row][col] != 0) {
-          Serial.println("checkBoard: " + String(sign(checkBoard[row][col])));
+          // Serial.println("checkBoard: " + String(sign(checkBoard[row][col])));
 					if (sign(checkBoard[row][col]) == kingColour) {
 						ownPiece = true;
 					} else if (checkBoard[row][col] == -1*queen*kingColour || checkBoard[row][col] == -1*bishop*kingColour){
@@ -992,10 +1005,10 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 			row = kingRow + (colDir + -1*rowDir)/2;
 			ownPiece = false;
 			// queen or rook
-      Serial.println("Queen or Rook");
+      // Serial.println("Queen or Rook");
 			while (col >= 0 && col < 8 && row >= 0 && row < 8 && !ownPiece) {
-        Serial.println("Row: " + String(row));
-        Serial.println("Col: " + String(col));
+        // Serial.println("Row: " + String(row));
+        // Serial.println("Col: " + String(col));
 				if (checkBoard[row][col] != 0) {
           Serial.println("checkBoard: " + String(checkBoard[row][col]));
 					if (sign(checkBoard[row][col]) == kingColour) {
@@ -1016,14 +1029,14 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 				row += (colDir + -1*rowDir)/2;
 			}
 			// knight
-      Serial.println("Knight");
+      // Serial.println("Knight");
 			row = kingRow + rowDir;
 			col = kingCol + 2*colDir;
-      Serial.println("Row: " + String(row));
-      Serial.println("Col: " + String(col));
+      // Serial.println("Row: " + String(row));
+      // Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*knight*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("knightVal: " + String(-2*kingColour));
+				// Serial.println("checkBoard: " + String(checkBoard[row][col]));
+        // Serial.println("knightVal: " + String(-2*kingColour));
         Serial.println("Attacker Found");
         if (hypothetical) {
           return true;
@@ -1035,11 +1048,11 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 			
 			row = kingRow + 2*rowDir;
 			col = kingCol + colDir;
-      Serial.println("Row: " + String(row));
-      Serial.println("Col: " + String(col));
+      // Serial.println("Row: " + String(row));
+      // Serial.println("Col: " + String(col));
 			if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*knight*kingColour) {
-				Serial.println("checkBoard: " + String(checkBoard[row][col]));
-        Serial.println("knightVal: " + String(-2*kingColour));
+				// Serial.println("checkBoard: " + String(checkBoard[row][col]));
+        // Serial.println("knightVal: " + String(-2*kingColour));
         Serial.println("Attacker Found");
         if (hypothetical) {
           return true;
@@ -1050,11 +1063,11 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
 			}
       // king
       if (!noKing) {
-        Serial.println("King");
+        // Serial.println("King");
         col = kingCol + (colDir + rowDir)/2;
         row = kingRow + (colDir + -1*rowDir)/2;
         if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
-          Serial.println("checkBoard: " + String(checkBoard[row][col]));
+          // Serial.println("checkBoard: " + String(checkBoard[row][col]));
           Serial.println("Attacker Found");
           if (hypothetical) {
             return true;
@@ -1067,7 +1080,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
         col = kingCol + colDir;
         row = kingRow + rowDir;
         if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*king*kingColour) {
-          Serial.println("checkBoard: " + String(checkBoard[row][col]));
+          // Serial.println("checkBoard: " + String(checkBoard[row][col]));
           Serial.println("Attacker Found");
           if (hypothetical) {
             return true;
@@ -1079,13 +1092,13 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
       }
 		}		
 		// Pawn
-    Serial.println("Pawn");
+    // Serial.println("Pawn");
 		row = kingRow + kingColour;
 		col = kingCol + colDir;    
-    Serial.println("Row: " + String(row));
-    Serial.println("Col: " + String(col));
+    // Serial.println("Row: " + String(row));
+    // Serial.println("Col: " + String(col));
 		if (row < 8 && row >= 0 && col < 8 && col >= 0 && checkBoard[row][col] == -1*pawn*kingColour) {
-			Serial.println("checkBoard: " + String(checkBoard[row][col]));
+			// Serial.println("checkBoard: " + String(checkBoard[row][col]));
       Serial.println("Attacker Found");
       if (hypothetical) {
         return true;
@@ -1108,6 +1121,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
     short row;
     short col;
     short tempPiece;
+    Serial.println("Looking for King moves");
     for (short colDir = -1; colDir < 2; colDir += 2) {
       for (short rowDir = -1; rowDir < 2; rowDir += 2) {
         col = kingCol + (colDir + rowDir)/2;
@@ -1127,6 +1141,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
       }
     }
     
+    Serial.println("Double check checkmate");
     if (kingAttackers[(kingColour+1)/2] > 1) {
       return true;
     }
@@ -1134,6 +1149,7 @@ boolean Chess::inCheck(short kingRow, short kingCol, short kingColour, short che
     row = kingAttackerPosition[0];
     col = kingAttackerPosition[1];
     
+    Serial.println("searching for blockers");
     if (checkBoard[row][col] == -1*knight*kingColour) {
       if (inCheck(row, col, -1*kingColour, checkBoard, true, true)) {
         return false;
@@ -1294,7 +1310,11 @@ void Chess::setPgnMove() {
     }
     
     if (kingAttackers[(-1*whosTurn+1)/2] > 0) {
-       strcat(lastPgnTurn,"+");
+      if (checkmate) {
+        strcat(lastPgnTurn, "#");
+      } else {
+        strcat(lastPgnTurn,"+");
+      }
     }
     
     Serial.println(lastPgnTurn);
