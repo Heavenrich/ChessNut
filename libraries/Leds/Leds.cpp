@@ -14,13 +14,13 @@ void Leds::setLEDPattern(short row, short column) {
 }
 
 void Leds::lightWhosTurn(short whosTurn) {
-  flipLEDs(false, false);
+  setInput(true, false);
   if (whosTurn > 0) {
     setLED(true, 0);
   } else {
     setLED(true, 7);
   }
-  flipLEDs();
+  setInput(true, true);
 }
 
 void Leds::turnOff() {
@@ -47,4 +47,12 @@ boolean Leds::flipLEDs(boolean flip, boolean input) {
   digitalWrite(ledControl[7], ledInput);
   
   return ledInput;
+}
+
+void Leds::setInput(boolean isColumn, boolean input) {
+  if (isColumn) {
+    digitalWrite(ledControl[7], input);
+  } else {
+    digitalWrite(ledControl[6], input);
+  }
 }

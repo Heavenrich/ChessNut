@@ -7,12 +7,16 @@
 
 class PGN {
 public:
-	PGN(char file[12]);
+  PGN();
+	//PGN(char file[12]);
+  void setFile(char file[12]);
+  boolean readFile();
+  void closeFile();
 	void stringParser(String a,short b);
 	void pgnParserPieces(char x, short b);
 
-	String listOfMoves[20];
-	short boardList[20][5];
+  File chosenfile;
+	short boardList[5];
 	short boardMoves;
 	short movesCount;
 	short color;

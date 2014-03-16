@@ -1,7 +1,10 @@
 #include "pgn.h"
 
-PGN::PGN(char file[12]){
-    File chosenfile = SD.open(file);
+PGN::PGN() {
+}
+
+/*PGN::PGN(char file[12]) {
+    chosenfile = SD.open(file);
     movesCount = 0;
     boardMoves = 0;
     String move = "";
@@ -31,13 +34,50 @@ PGN::PGN(char file[12]){
             color = 1;
         }
     }
+}*/
+
+void PGN::setFile(char file[12]) {
+  chosenfile = SD.open(file);
+  movesCount = 0;
+  boardMoves = 0;
+}
+
+boolean PGN::readFile() {
+  String move = "";
+  while(chosenfile.available()){
+    char temp = chosenfile.read();
+    Serial.println("read" + String(temp));
+    if (temp != ' ') {
+      move += String(temp);
+      Serial.println("strcat: " + move);
+    } else {
+      Serial.println("listOfMoves " + move);
+      if (movesCount % 3 != 0) {
+        Serial.println("stringParser: " + move);
+        stringParser(move,color);
+        color = -1;
+      }
+      else {
+        color = 1;
+      }
+      movesCount++;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void PGN::closeFile() {
+  Serial.println("movesCount: " + String(movesCount));
+  chosenfile.close();
 }
 
 void PGN::stringParser(String a, short b) {
     if (a.length() == 2) {
-        boardList[boardMoves][0]=a[1]-49;
-        boardList[boardMoves][1]=a[0]-97;
-        boardList[boardMoves][2]=1*b;
+        boardList[0]=a[1]-49;
+        boardList[1]=a[0]-97;
+        boardList[2]=1*b;
     }
     
     // 3 chars
@@ -46,32 +86,32 @@ void PGN::stringParser(String a, short b) {
     // big piece moving
     else if (a.length() == 3) {
         if (a[0] == 'x') {
-            boardList[boardMoves][0]=a[2]-49;;
-            boardList[boardMoves][1]=a[1]-97;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=a[2]-49;;
+            boardList[1]=a[1]-97;
+            boardList[2]=1*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[2] == '+' || a[2] == '#'){
-            boardList[boardMoves][0]=a[1]-49;
-            boardList[boardMoves][1]=a[0]-97;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=a[1]-49;
+            boardList[1]=a[0]-97;
+            boardList[2]=1*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[0] == 'O' ) {
-            boardList[boardMoves][0]=-1;
-            boardList[boardMoves][1]=-1;
-            boardList[boardMoves][2]=6*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=-1;
+            boardList[1]=-1;
+            boardList[2]=6*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else {
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
     }
 
@@ -81,74 +121,74 @@ void PGN::stringParser(String a, short b) {
     // OR same pieces move to one spot (rooks,QQ, knight)
     else if (a.length() == 4){
         if (a[3] == '#') {
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[0] == 'O' ) {
-            boardList[boardMoves][0]=0;
-            boardList[boardMoves][1]=0;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=0;
+            boardList[1]=0;
+            boardList[2]=1*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[0] == 'x') {
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
+            boardList[2]=1*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (isupper(a[0]) && a[1] == 'x') {
-            boardList[boardMoves][0]=a[3]-49;
-            boardList[boardMoves][1]=a[2]-97;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=a[3]-49;
+            boardList[1]=a[2]-97;
+            boardList[3]=-1;
+            boardList[4]=-1;
             pgnParserPieces(a[0],b);
         }
         else if (isupper(a[0]) && a[1] != 'x' && a[3] == '+') {
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (isupper(a[0]) && a[1] != 'x' && isdigit(a[1])) {
-            boardList[boardMoves][0]=a[3]-49;
-            boardList[boardMoves][1]=a[2]-97;
+            boardList[0]=a[3]-49;
+            boardList[1]=a[2]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
          else if (a[3] == '+' || a[3] == '#'){
-            boardList[boardMoves][0]=a[1]-49;
-            boardList[boardMoves][1]=a[0]-97;
+            boardList[0]=a[1]-49;
+            boardList[1]=a[0]-97;
             pgnParserPieces(a[2],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[2] == '='){
-            boardList[boardMoves][0]=a[1]-49;
-            boardList[boardMoves][1]=a[0]-97;
+            boardList[0]=a[1]-49;
+            boardList[1]=a[0]-97;
             pgnParserPieces(a[3],b);
-            boardList[boardMoves][3]=-2;
-            boardList[boardMoves][4]=-2;
+            boardList[3]=-2;
+            boardList[4]=-2;
         }
         else if (isupper(a[0]) && a[1] != 'x' && isalpha(a[1])) {
-            boardList[boardMoves][0]=a[3]-49;
-            boardList[boardMoves][1]=a[2]-97;
+            boardList[0]=a[3]-49;
+            boardList[1]=a[2]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (islower(a[0])) {
-            boardList[boardMoves][0]=a[3]-49;
-            boardList[boardMoves][1]=a[2]-97;
-            boardList[boardMoves][2]=1*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=a[3]-49;
+            boardList[1]=a[2]-97;
+            boardList[2]=1*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
             // else {
             // pgnParserPieces(a[1],b);
@@ -162,33 +202,33 @@ void PGN::stringParser(String a, short b) {
     else if (a.length() == 5){
         if (a[0] == 'x') {
             // handles both cases
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
             pgnParserPieces(a[4],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (isupper(a[0]) && a[1] == 'x') {
-            boardList[boardMoves][0]=a[3]-49;
-            boardList[boardMoves][1]=a[2]-97;
+            boardList[0]=a[3]-49;
+            boardList[1]=a[2]-97;
             pgnParserPieces(a[0],b);
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else if (a[0] == 'O' ) {
-            boardList[boardMoves][0]=-2;
-            boardList[boardMoves][1]=-2;
-            boardList[boardMoves][2]=6*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=-2;
+            boardList[1]=-2;
+            boardList[2]=6*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else {
             if (islower(a[0])) {
-                boardList[boardMoves][0]=a[1]-49;
-                boardList[boardMoves][1]=a[0]-97;
+                boardList[0]=a[1]-49;
+                boardList[1]=a[0]-97;
                 pgnParserPieces(a[3],b);
-                boardList[boardMoves][3]=-2;
-                boardList[boardMoves][4]=-2;
+                boardList[3]=-2;
+                boardList[4]=-2;
             }
             // else {
             //     pgnParserPieces(a[1],b);
@@ -199,18 +239,18 @@ void PGN::stringParser(String a, short b) {
     }
     else if (a.length() == 6) {
         if (a[0] == 'O' ) {
-            boardList[boardMoves][0]=-2;
-            boardList[boardMoves][1]=-2;
-            boardList[boardMoves][2]=6*b;
-            boardList[boardMoves][3]=-1;
-            boardList[boardMoves][4]=-1;
+            boardList[0]=-2;
+            boardList[1]=-2;
+            boardList[2]=6*b;
+            boardList[3]=-1;
+            boardList[4]=-1;
         }
         else {
-            boardList[boardMoves][0]=a[2]-49;
-            boardList[boardMoves][1]=a[1]-97;
+            boardList[0]=a[2]-49;
+            boardList[1]=a[1]-97;
             pgnParserPieces(a[4],b);
-            boardList[boardMoves][3]=-2;
-            boardList[boardMoves][4]=-2;
+            boardList[3]=-2;
+            boardList[4]=-2;
         }
     }
     boardMoves++;
@@ -219,22 +259,22 @@ void PGN::stringParser(String a, short b) {
 void PGN::pgnParserPieces(char x, short b) {
     switch (x) {
         case 'K':
-            boardList[boardMoves][2]=6*b;
+            boardList[2]=6*b;
             break;
         case 'Q':
-            boardList[boardMoves][2]=5*b;        
+            boardList[2]=5*b;
             break;
         case 'R':
-            boardList[boardMoves][2]=4*b;
+            boardList[2]=4*b;
             break;
         case 'B':
-            boardList[boardMoves][2]=3*b;
+            boardList[2]=3*b;
             break;
         case 'N':
-            boardList[boardMoves][2]=2*b;
+            boardList[2]=2*b;
             break;
         default:
-            boardList[boardMoves][2]=1*b;
+            boardList[2]=1*b;
             break;
     }
 }
