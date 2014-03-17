@@ -142,9 +142,9 @@ void loop() {
       strcpy(ret, itoa(fileNum, fileName, 10));
       strcat(ret, ".pgn");
     }
-    
+
     Serial.print("Filename: ");
-    Serial.println(ret);    
+    Serial.println(ret);
     memcpy(chess.fileName, ret, sizeof(chess.fileName));
     
     if (chess.initialize()) {
@@ -222,29 +222,27 @@ void loop() {
     }
   } else if (state == CLOCK_MENU) {
     gameType = clockMenu.loop();
+    short fileNum = 0;
+    char fileName[5];
+    char ret[10];
+    strcpy(ret, itoa(fileNum, fileName, 10));
+    strcat(ret, ".pgn");
+    while (SD.exists(ret)) {
+      fileNum++;
+      strcpy(ret, itoa(fileNum, fileName, 10));
+      strcat(ret, ".pgn");
+    }
+        
+    Serial.print("Filename: ");
+    Serial.println(ret);    
+    memcpy(chess.fileName, ret, sizeof(chess.fileName));
+
     if (gameType == ClockMenu::timer) {
       state = CLOCK_TIMER_WHITE;
       clockTimer.reset();
     } else if (gameType == ClockMenu::noTimer) {
       state = NEW_GAME;
-      
-      if (chess.newGame()) {
-        short fileNum = 0;
-        char fileName[5];
-        char ret[10];
-        strcpy(ret, itoa(fileNum, fileName, 10));
-        strcat(ret, ".pgn");
-        while (SD.exists(ret)) {
-          fileNum++;
-          strcpy(ret, itoa(fileNum, fileName, 10));
-          strcat(ret, ".pgn");
-        }
-        
-        Serial.print("Filename: ");
-        Serial.println(ret);    
-        memcpy(chess.fileName, ret, sizeof(chess.fileName));
-        state = SCANNING;
-      }
+      chess.newGame(-1, -1);
     }
   } else if (state == CLOCK_TIMER_WHITE) {
     whiteTime = clockTimer.loop();
@@ -255,11 +253,8 @@ void loop() {
   } else if (state == CLOCK_TIMER_BLACK) {
     blackTime = clockTimer.loop();
     if (blackTime != 0) {
-      if (chess.newGame(whiteTime, blackTime)) {
-        state = SCANNING;
-      } else {
-        state = NEW_GAME;
-      }
+      chess.newGame(whiteTime, blackTime);
+      state = NEW_GAME;
     }
   } else if (state == CLOCK_START) {
     if (enableSelect && digitalRead(endTurn)) {

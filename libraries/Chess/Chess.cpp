@@ -228,6 +228,7 @@ void Chess::setRed(boolean on) {
 }
 
 void Chess::loadGame() {
+  clock.set(-1, -1);
   checkmate = false;
   resetSetupBoard();
   lcd->clear();

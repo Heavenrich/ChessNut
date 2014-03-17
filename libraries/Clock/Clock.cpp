@@ -6,6 +6,7 @@ Clock::Clock(Lcd *l) :
 }
 
 void Clock::set(short white, short black) {
+  Serial.println("clock white: " + String(white) + " mins, black: " + String(black) + " mins");
   if (white > 0 && black > 0) {
     enabled = true;
     whiteTime = long(white) * 60 * 1000;
@@ -26,6 +27,7 @@ void Clock::writeTimes() {
 }
 
 void Clock::start() {
+  Serial.println("CLOCK START");
   time = millis();
   started = true;
 }
