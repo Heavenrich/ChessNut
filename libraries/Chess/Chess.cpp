@@ -231,6 +231,10 @@ void Chess::loadGame() {
   checkmate = false;
   resetSetupBoard();
   lcd->clear();
+  kingPositions[0][0] = 7;
+  kingPositions[0][1] = 4;
+  kingPositions[1][0] = 0;
+  kingPositions[1][1] = 4;
   //memcpy(board, (short[8][8]){
   //    {0, 0, 0, 0, 0, 0, 0, 0},
   //    {rook, knight, bishop, queen, king, bishop, knight, rook},
@@ -1676,6 +1680,8 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
+            kingPositions[(-1*whosTurn+2)%3][0] = row;
+            kingPositions[(-1*whosTurn+2)%3][1] = col;
             return true;
           }
           
@@ -1684,6 +1690,8 @@ boolean Chess::moveAttacker(short attackRow, short attackCol, short piece, short
           if (row < 8 && row >= 0 && col < 8 && col >= 0 && board[row][col] == piece) {
             board[row][col] = 0;
             board[attackRow][attackCol] = piece;
+            kingPositions[(-1*whosTurn+2)%3][0] = row;
+            kingPositions[(-1*whosTurn+2)%3][1] = col;
             return true;
           }
         }
