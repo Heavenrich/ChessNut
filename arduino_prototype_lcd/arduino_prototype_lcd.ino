@@ -180,10 +180,12 @@ void loop() {
     pgn.setFile(ret);
     chess.initializeBoard();
     chess.debugCurrentBoard();
-    chess.whosTurn = -1;
+    chess.whosTurn = 1;
+    chess.numTurns = 0;
     while (pgn.readFile()) {
-      chess.whosTurn *= -1;
-      chess.numTurns++;
+      if (chess.whosTurn == 1) {
+        chess.numTurns++; 
+      }
       if (pgn.castle) {
         chess.moveCastle(pgn.castleKingSide);
       } else if (pgn.boardList[6] != PGN::notUsed) {
@@ -192,10 +194,10 @@ void loop() {
         chess.moveAttacker(pgn.boardList[5], pgn.boardList[4], pgn.boardList[0], pgn.boardList[2], pgn.boardList[1]);
       }
       chess.debugCurrentBoard();
+      chess.whosTurn *= -1;
     }
     lcd.noBlink();
     pgn.closeFile();
-    chess.whosTurn *= -1;
     
     Serial.println("Done recreating pgn");
     
